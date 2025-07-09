@@ -53,23 +53,53 @@ const config = require('../config/database');
 const env = process.env.NODE_ENV || 'development';
 const dbConfig = config[env];
 
-let sequelize;
 
-if (dbConfig.use_env_variable){
-  sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
-} else {
-    dbConfig.database,
-  dbConfig.username,
-  dbConfig.password,
-  dbConfig
-}
+console.log('Environment:', env);
+console.log('Database config:', {
+  ...dbConfig,
+  password: dbConfig.password ? '[HIDDEN]' : undefined
+});
 
-// const sequelize = new Sequelize(
-//   dbConfig.database,
+
+
+// let sequelize;
+
+// if (dbConfig.use_env_variable){
+//   sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
+// } else {
+//     dbConfig.database,
 //   dbConfig.username,
 //   dbConfig.password,
 //   dbConfig
-// );
+// }
+
+// Handle both individual config and DATABASE_URL
+let sequelize;
+try {
+  if (dbConfig.use_env_variable) {
+    const databaseUrl = process.env[dbConfig.use_env_variable];
+    console.log('Using DATABASE_URL:', databaseUrl ? 'Present' : 'Missing');
+    if (!databaseUrl) {
+      throw new Error(`Environment variable ${dbConfig.use_env_variable} is not set`);
+    }
+    sequelize = new Sequelize(databaseUrl, dbConfig);
+  } else {
+    // Check if all required config is present
+    if (!dbConfig.database || !dbConfig.username || !dbConfig.password || !dbConfig.host) {
+      throw new Error('Missing required database configuration');
+    }
+    sequelize = new Sequelize(
+      dbConfig.database,
+      dbConfig.username,
+      dbConfig.password,
+      dbConfig
+    );
+  }
+  console.log('Sequelize instance created successfully');
+} catch (error) {
+  console.error('Failed to create Sequelize instance:', error);
+  throw error;
+}
 
 // Import models
 const User = require('./User')(sequelize);
