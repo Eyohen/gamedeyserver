@@ -19,7 +19,13 @@ const community = require('./routes/community');
 const payment = require('./routes/payment');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.API_PORT || 3000;
+app.use(cors());
+
+app.use(helmet());
+app.use(morgan('combined'));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -27,26 +33,17 @@ const limiter = rateLimit({
   max: 100 // limit each IP to 100 requests per windowMs
 });
 
-
-app.use(cors());
-
-
 // Basic middleware
-app.use(morgan('combined'));
 app.use(limiter);
 
 // IMPORTANT: Handle webhook route BEFORE general JSON parsing
 // This allows the webhook to receive raw body for signature verification
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 
-// General JSON parsing for other routes
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+
+
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: false, // Disable CSP for development
-}));
 
 // Routes
 app.use('/api/auth', auth);
