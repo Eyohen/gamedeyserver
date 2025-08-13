@@ -4,7 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-const rateLimit = require('express-rate-limit');
+// const rateLimit = require('express-rate-limit');
 const { sequelize } = require('./models');
 const errorHandler = require('./middleware/errorHandler');
 
@@ -17,6 +17,7 @@ const admin = require('./routes/admin');
 const booking = require('./routes/booking');
 const community = require('./routes/community');
 const payment = require('./routes/payment');
+const review = require('./routes/review');
 
 const app = express();
 const PORT = process.env.API_PORT || 3000;
@@ -28,13 +29,13 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Rate limiting
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
-});
+// const limiter = rateLimit({
+//   windowMs: 15 * 60 * 1000, // 15 minutes
+//   max: 100 // limit each IP to 100 requests per windowMs
+// });
 
 // Basic middleware
-app.use(limiter);
+// app.use(limiter);
 
 // IMPORTANT: Handle webhook route BEFORE general JSON parsing
 // This allows the webhook to receive raw body for signature verification
@@ -54,6 +55,7 @@ app.use('/api/admin', admin);
 app.use('/api/bookings', booking);
 app.use('/api/community', community);
 app.use('/api/payments', payment);
+app.use('/api/reviews', review); 
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -64,6 +66,27 @@ app.get('/health', (req, res) => {
     environment: process.env.NODE_ENV || 'development'
   });
 });
+
+
+// API info route
+app.get('/api', (req, res) => {
+  res.status(200).json({
+    message: 'Gamedey API',
+    version: '1.0.0',
+    endpoints: {
+      auth: '/api/auth',
+      users: '/api/users',
+      coaches: '/api/coaches', 
+      facilities: '/api/facilities',
+      admin: '/api/admin',
+      bookings: '/api/bookings',
+      community: '/api/community',
+      payments: '/api/payments',
+      reviews: '/api/reviews'
+    }
+  });
+});
+
 
 // Test webhook endpoint for debugging
 app.post('/test-webhook', express.json(), (req, res) => {

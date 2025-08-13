@@ -1,6 +1,6 @@
 
 // controllers/AdminController.js
-const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction } = require('../models');
+const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -543,6 +543,215 @@ class AdminController {
       return ResponseUtil.error(res, 'Failed to retrieve platform analytics', 500);
     }
   }
+
+
+
+    // Get flagged content for moderation (UPDATED)
+  static async getFlaggedContent(req, res) {
+    try {
+      const { page = 1, limit = 10, type = 'all' } = req.query;
+      const offset = (page - 1) * limit;
+
+      let flaggedContent = [];
+
+      if (type === 'all' || type === 'posts') {
+        const flaggedPosts = await Post.findAll({
+          where: { 
+            [Op.or]: [
+              { status: 'flagged' },
+              { status: 'pending' }
+            ]
+          },
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: ['firstName', 'lastName', 'email']
+            }
+          ],
+          order: [['updatedAt', 'DESC']],
+          limit: type === 'posts' ? parseInt(limit) : undefined,
+          offset: type === 'posts' ? parseInt(offset) : undefined
+        });
+
+        flaggedContent = flaggedContent.concat(flaggedPosts.map(post => ({
+          ...post.toJSON(),
+          contentType: 'post'
+        })));
+      }
+
+      if (type === 'all' || type === 'comments') {
+        const flaggedComments = await Comment.findAll({
+          where: { 
+            [Op.or]: [
+              { status: 'flagged' },
+              { status: 'pending' }
+            ]
+          },
+          include: [
+            {
+              model: User,
+              as: 'User',
+              attributes: ['firstName', 'lastName', 'email']
+            },
+            {
+              model: Post,
+              as: 'Post',
+              attributes: ['title']
+            }
+          ],
+          order: [['updatedAt', 'DESC']],
+          limit: type === 'comments' ? parseInt(limit) : undefined,
+          offset: type === 'comments' ? parseInt(offset) : undefined
+        });
+
+        flaggedContent = flaggedContent.concat(flaggedComments.map(comment => ({
+          ...comment.toJSON(),
+          contentType: 'comment'
+        })));
+      }
+
+      // Sort by updated date
+      flaggedContent.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+      // Apply pagination if showing all
+      if (type === 'all') {
+        const startIndex = parseInt(offset);
+        const endIndex = startIndex + parseInt(limit);
+        flaggedContent = flaggedContent.slice(startIndex, endIndex);
+      }
+
+      const pagination = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: flaggedContent.length,
+        pages: Math.ceil(flaggedContent.length / limit)
+      };
+
+      return ResponseUtil.paginated(res, flaggedContent, pagination, 'Flagged content retrieved successfully');
+    } catch (error) {
+      console.error('Get flagged content error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve flagged content', 500);
+    }
+  }
+
+  // Moderate content (UPDATED)
+  static async moderateContent(req, res) {
+    try {
+      const { contentId, contentType, action, reason } = req.body;
+
+      if (!['approve', 'hide', 'delete', 'reject'].includes(action)) {
+        return ResponseUtil.error(res, 'Invalid moderation action', 400);
+      }
+
+      let content;
+      let newStatus;
+
+      switch (action) {
+        case 'approve':
+          newStatus = 'active';
+          break;
+        case 'hide':
+          newStatus = 'hidden';
+          break;
+        case 'delete':
+          newStatus = 'deleted';
+          break;
+        case 'reject':
+          newStatus = 'rejected';
+          break;
+      }
+
+      if (contentType === 'post') {
+        content = await Post.findByPk(contentId);
+        if (!content) {
+          return ResponseUtil.error(res, 'Post not found', 404);
+        }
+        
+        await content.update({ 
+          status: newStatus, 
+          moderationReason: reason,
+          moderatedAt: new Date(),
+          moderatedBy: null
+          // moderatedBy: req.user.id
+        });
+
+        // If approving a post, increment comment count for approved comments
+        if (action === 'approve') {
+          const approvedComments = await Comment.count({
+            where: { postId: contentId, status: 'active' }
+          });
+          await content.update({ commentCount: approvedComments });
+        }
+      }
+
+      if (contentType === 'comment') {
+        content = await Comment.findByPk(contentId);
+        if (!content) {
+          return ResponseUtil.error(res, 'Comment not found', 404);
+        }
+        
+        await content.update({ 
+          status: newStatus, 
+          moderationReason: reason,
+          moderatedAt: new Date(),
+          // moderatedBy: req.user.id
+        });
+
+        // Update post comment count
+        if (action === 'approve') {
+          await Post.increment('commentCount', { where: { id: content.postId } });
+        } else if (content.status === 'active' && ['hide', 'delete', 'reject'].includes(action)) {
+          await Post.decrement('commentCount', { where: { id: content.postId } });
+        }
+      }
+
+      return ResponseUtil.success(res, content, 'Content moderated successfully');
+    } catch (error) {
+      console.error('Moderate content error:', error);
+      return ResponseUtil.error(res, 'Failed to moderate content', 500);
+    }
+  }
+
+  // Get community statistics
+  static async getCommunityStats(req, res) {
+    try {
+      const totalPosts = await Post.count();
+      const activePosts = await Post.count({ where: { status: 'active' } });
+      const pendingPosts = await Post.count({ where: { status: 'pending' } });
+      const flaggedPosts = await Post.count({ where: { status: 'flagged' } });
+      
+      const totalComments = await Comment.count();
+      const activeComments = await Comment.count({ where: { status: 'active' } });
+      const pendingComments = await Comment.count({ where: { status: 'pending' } });
+      
+      const totalVotes = await Vote.count();
+
+      const stats = {
+        posts: {
+          total: totalPosts,
+          active: activePosts,
+          pending: pendingPosts,
+          flagged: flaggedPosts
+        },
+        comments: {
+          total: totalComments,
+          active: activeComments,
+          pending: pendingComments
+        },
+        engagement: {
+          totalVotes
+        }
+      };
+
+      return ResponseUtil.success(res, stats, 'Community statistics retrieved successfully');
+    } catch (error) {
+      console.error('Get community stats error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve community statistics', 500);
+    }
+  }
+
+
 }
 
 module.exports = AdminController;

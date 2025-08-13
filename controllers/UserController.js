@@ -1,4 +1,3 @@
-
 // controllers/UserController.js
 const { User, Booking, Review, Post, Transaction, Notification } = require('../models');
 const ResponseUtil = require('../utils/response');
