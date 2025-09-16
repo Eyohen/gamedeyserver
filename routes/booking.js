@@ -46,4 +46,19 @@ router.get('/availability/slots', [
   query('date').notEmpty().isISO8601().withMessage('Date is required and must be valid ISO date')
 ], BookingController.getAvailableTimeSlots);
 
+// Get availability calendar (for graying out unavailable dates)
+router.get('/availability/calendar', [
+  query('facilityId').optional().isUUID().withMessage('Facility ID must be a valid UUID'),
+  query('coachId').optional().isUUID().withMessage('Coach ID must be a valid UUID'),
+  query('startDate').notEmpty().isISO8601().withMessage('Start date is required and must be valid ISO date'),
+  query('endDate').notEmpty().isISO8601().withMessage('End date is required and must be valid ISO date')
+], BookingController.getAvailabilityCalendar);
+
+// Get specific date availability (for time slots)
+router.get('/availability/date', [
+  query('facilityId').optional().isUUID().withMessage('Facility ID must be a valid UUID'),
+  query('coachId').optional().isUUID().withMessage('Coach ID must be a valid UUID'),
+  query('date').notEmpty().isISO8601().withMessage('Date is required and must be valid ISO date')
+], BookingController.getDateAvailability);
+
 module.exports = router;

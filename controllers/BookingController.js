@@ -337,6 +337,127 @@ class BookingController {
       return ResponseUtil.error(res, 'Failed to retrieve available time slots', 500);
     }
   }
+
+
+// Check availability for multiple dates (for calendar view)
+  static async getAvailabilityCalendar(req, res) {
+    try {
+      const { facilityId, coachId, startDate, endDate } = req.query;
+
+      if (!startDate || !endDate) {
+        return ResponseUtil.error(res, 'Start date and end date are required', 400);
+      }
+
+      if (!facilityId && !coachId) {
+        return ResponseUtil.error(res, 'Either facilityId or coachId is required', 400);
+      }
+
+      const start = new Date(startDate);
+      const end = new Date(endDate);
+      
+      // Build where clause for bookings
+      let whereClause = {
+        status: { [Op.in]: ['pending', 'confirmed'] },
+        startTime: { [Op.between]: [start, end] }
+      };
+
+      if (facilityId) {
+        whereClause.facilityId = facilityId;
+      }
+      if (coachId) {
+        whereClause.coachId = coachId;
+      }
+
+      // Get all confirmed/pending bookings in the date range
+      const bookings = await Booking.findAll({
+        where: whereClause,
+        attributes: ['startTime', 'endTime'],
+        order: [['startTime', 'ASC']]
+      });
+
+      // Create array of unavailable dates
+      const unavailableDates = [];
+      const processedDates = new Set();
+
+      bookings.forEach(booking => {
+        const bookingDate = new Date(booking.startTime).toISOString().split('T')[0];
+        if (!processedDates.has(bookingDate)) {
+          unavailableDates.push(bookingDate);
+          processedDates.add(bookingDate);
+        }
+      });
+
+      return ResponseUtil.success(res, {
+        unavailableDates,
+        dateRange: { startDate, endDate }
+      }, 'Availability calendar retrieved successfully');
+
+    } catch (error) {
+      console.error('Get availability calendar error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve availability calendar', 500);
+    }
+  }
+
+  // Check specific date availability with time slots
+  static async getDateAvailability(req, res) {
+    try {
+      const { facilityId, coachId, date } = req.query;
+
+      if (!date) {
+        return ResponseUtil.error(res, 'Date is required', 400);
+      }
+
+      if (!facilityId && !coachId) {
+        return ResponseUtil.error(res, 'Either facilityId or coachId is required', 400);
+      }
+
+      const selectedDate = new Date(date);
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      // Build where clause
+      let whereClause = {
+        status: { [Op.in]: ['pending', 'confirmed'] },
+        startTime: { [Op.between]: [startOfDay, endOfDay] }
+      };
+
+      if (facilityId) {
+        whereClause.facilityId = facilityId;
+      }
+      if (coachId) {
+        whereClause.coachId = coachId;
+      }
+
+      // Get all bookings for this specific date
+      const bookings = await Booking.findAll({
+        where: whereClause,
+        attributes: ['startTime', 'endTime'],
+        order: [['startTime', 'ASC']]
+      });
+
+      // Convert bookings to unavailable time slots
+      const unavailableSlots = bookings.map(booking => ({
+        start: booking.startTime,
+        end: booking.endTime
+      }));
+
+      return ResponseUtil.success(res, {
+        date,
+        unavailableSlots,
+        isFullyBooked: bookings.length > 0
+      }, 'Date availability retrieved successfully');
+
+    } catch (error) {
+      console.error('Get date availability error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve date availability', 500);
+    }
+  }
+
+
+
 }
 
 module.exports = BookingController;

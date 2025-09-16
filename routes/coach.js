@@ -36,7 +36,9 @@ router.put('/profile/me', [
   body('specialties').optional().isArray().withMessage('Specialties must be an array'),
   body('certifications').optional().isArray().withMessage('Certifications must be an array'),
   body('availability').optional().isObject().withMessage('Availability must be an object'),
-  body('location').optional().isObject().withMessage('Location must be an object')
+  body('location').optional().isObject().withMessage('Location must be an object'),
+  body('profileImage').optional().isURL().withMessage('Profile image must be a valid URL'),
+  body('galleryImages').optional().isArray().withMessage('Gallery images must be an array')
 ], CoachController.updateProfile);
 
 // Get coach bookings

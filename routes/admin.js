@@ -60,27 +60,13 @@ router.patch('/facilities/:facilityId/verification', [
   body('rejectionReason').optional().isString().withMessage('Rejection reason must be a string')
 ], AdminController.updateFacilityVerification);
 
-// Content moderation
-// router.get('/content/flagged', [
-//   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
-//   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
-//   query('type').optional().isIn(['all', 'posts', 'comments']).withMessage('Invalid content type')
-// ], AdminController.getFlaggedContent);
 
-// Content moderation (UPDATED)
+// Content moderation 
 router.get('/content/flagged', [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
   query('type').optional().isIn(['all', 'posts', 'comments']).withMessage('Invalid content type')
 ], AdminController.getFlaggedContent);
-
-
-// router.post('/content/moderate', [
-//   body('contentId').isUUID().withMessage('Content ID must be a valid UUID'),
-//   body('contentType').isIn(['post', 'comment']).withMessage('Invalid content type'),
-//   body('action').isIn(['approve', 'hide', 'delete']).withMessage('Invalid moderation action'),
-//   body('reason').optional().isString().withMessage('Reason must be a string')
-// ], AdminController.moderateContent);
 
 router.post('/content/moderate', [
   body('contentId').isUUID().withMessage('Content ID must be a valid UUID'),

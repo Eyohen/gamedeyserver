@@ -84,7 +84,7 @@
 
 
 
-// models/Comment.js - FIXED with 'pending' status
+// models/Comment.js 
 const { DataTypes, Model } = require('sequelize');
 
 module.exports = (sequelize) => {

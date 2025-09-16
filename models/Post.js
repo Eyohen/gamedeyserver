@@ -121,7 +121,7 @@
 
 
 
-// models/Post.js - FIXED with 'pending' status
+// models/Post.js 
 const { DataTypes, Model } = require('sequelize');
 
 module.exports = (sequelize) => {

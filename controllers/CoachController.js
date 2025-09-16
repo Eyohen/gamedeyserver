@@ -158,44 +158,87 @@ class CoachController {
   }
 
   // Update coach profile
-  static async updateProfile(req, res) {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
-      }
+  // static async updateProfile(req, res) {
+  //   try {
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) {
+  //       return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+  //     }
 
-      const coach = await Coach.findOne({ where: { userId: req.user.id } });
-      if (!coach) {
-        return ResponseUtil.error(res, 'Coach profile not found', 404);
-      }
+  //     const coach = await Coach.findOne({ where: { userId: req.user.id } });
+  //     if (!coach) {
+  //       return ResponseUtil.error(res, 'Coach profile not found', 404);
+  //     }
 
-      const {
-        bio,
-        experience,
-        hourlyRate,
-        specialties,
-        certifications,
-        availability,
-        location
-      } = req.body;
+  //     const {
+  //       bio,
+  //       experience,
+  //       hourlyRate,
+  //       specialties,
+  //       certifications,
+  //       availability,
+  //       location
+  //     } = req.body;
 
-      await coach.update({
-        bio: bio || coach.bio,
-        experience: experience || coach.experience,
-        hourlyRate: hourlyRate || coach.hourlyRate,
-        specialties: specialties || coach.specialties,
-        certifications: certifications || coach.certifications,
-        availability: availability || coach.availability,
-        location: location || coach.location
-      });
+  //     await coach.update({
+  //       bio: bio || coach.bio,
+  //       experience: experience || coach.experience,
+  //       hourlyRate: hourlyRate || coach.hourlyRate,
+  //       specialties: specialties || coach.specialties,
+  //       certifications: certifications || coach.certifications,
+  //       availability: availability || coach.availability,
+  //       location: location || coach.location
+  //     });
 
-      return ResponseUtil.success(res, coach, 'Coach profile updated successfully');
-    } catch (error) {
-      console.error('Update coach profile error:', error);
-      return ResponseUtil.error(res, 'Failed to update coach profile', 500);
+  //     return ResponseUtil.success(res, coach, 'Coach profile updated successfully');
+  //   } catch (error) {
+  //     console.error('Update coach profile error:', error);
+  //     return ResponseUtil.error(res, 'Failed to update coach profile', 500);
+  //   }
+  // }
+  // controllers/CoachController.js - Add image handling
+static async updateProfile(req, res) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
     }
+
+    const coach = await Coach.findOne({ where: { userId: req.user.id } });
+    if (!coach) {
+      return ResponseUtil.error(res, 'Coach profile not found', 404);
+    }
+
+    const {
+      bio,
+      experience,
+      hourlyRate,
+      specialties,
+      certifications,
+      availability,
+      location,
+      profileImage,
+      galleryImages
+    } = req.body;
+
+    await coach.update({
+      bio: bio || coach.bio,
+      experience: experience || coach.experience,
+      hourlyRate: hourlyRate || coach.hourlyRate,
+      specialties: specialties || coach.specialties,
+      certifications: certifications || coach.certifications,
+      availability: availability || coach.availability,
+      location: location || coach.location,
+      profileImage: profileImage || coach.profileImage,
+      galleryImages: galleryImages || coach.galleryImages
+    });
+
+    return ResponseUtil.success(res, coach, 'Coach profile updated successfully');
+  } catch (error) {
+    console.error('Update coach profile error:', error);
+    return ResponseUtil.error(res, 'Failed to update coach profile', 500);
   }
+}
 
   // Get coach bookings
   static async getBookings(req, res) {
