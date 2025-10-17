@@ -1,51 +1,5 @@
 // 'use strict';
 
-// const fs = require('fs');
-// const path = require('path');
-// const Sequelize = require('sequelize');
-// const process = require('process');
-// const basename = path.basename(__filename);
-// const env = process.env.NODE_ENV || 'development';
-// const config = require(__dirname + '/../config/config.js')[env];
-// const db = {};
-
-// let sequelize;
-// if (config.use_env_variable) {
-//   sequelize = new Sequelize(process.env[config.use_env_variable], config);
-// } else {
-//   sequelize = new Sequelize(config.database, config.username, config.password, config);
-// }
-
-// fs
-//   .readdirSync(__dirname)
-//   .filter(file => {
-//     return (
-//       file.indexOf('.') !== 0 &&
-//       file !== basename &&
-//       file.slice(-3) === '.js' &&
-//       file.indexOf('.test.js') === -1
-//     );
-//   })
-//   .forEach(file => {
-//     const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
-//     db[model.name] = model;
-//   });
-
-// Object.keys(db).forEach(modelName => {
-//   if (db[modelName].associate) {
-//     db[modelName].associate(db);
-//   }
-// });
-
-// db.sequelize = sequelize;
-// db.Sequelize = Sequelize;
-
-// module.exports = db;
-
-
-
-
-
 // models/index.js
 const { Sequelize } = require('sequelize');
 const config = require('../config/database');
@@ -61,17 +15,6 @@ console.log('Database config:', {
 });
 
 
-
-// let sequelize;
-
-// if (dbConfig.use_env_variable){
-//   sequelize = new Sequelize(process.env[dbConfig.use_env_variable], dbConfig);
-// } else {
-//     dbConfig.database,
-//   dbConfig.username,
-//   dbConfig.password,
-//   dbConfig
-// }
 
 // Handle both individual config and DATABASE_URL
 let sequelize;
@@ -115,6 +58,10 @@ const Comment = require('./Comment')(sequelize);
 const Vote = require('./Vote')(sequelize);
 const Notification = require('./Notification')(sequelize);
 const Transaction = require('./Transaction')(sequelize);
+const BankAccount = require('./BankAccount')(sequelize);
+const CoachEarning = require('./CoachEarning')(sequelize);
+const SessionPackage = require('./SessionPackage')(sequelize);
+const Team = require('./Team')(sequelize);
 
 // Define associations
 const models = {
@@ -130,11 +77,16 @@ const models = {
   Comment,
   Vote,
   Notification,
-  Transaction
+  Transaction,
+  BankAccount,
+  CoachEarning,
+  SessionPackage,
+  Team
 };
 
 
 // User associations
+User.hasOne(Coach, { foreignKey: 'userId', as: 'Coach' }); // User can be a coach
 User.hasMany(Booking, { foreignKey: 'userId' });
 User.hasMany(Review, { foreignKey: 'userId' });
 User.hasMany(Post, { foreignKey: 'userId' });
@@ -142,7 +94,7 @@ User.hasMany(Comment, { foreignKey: 'userId' });
 User.hasMany(Vote, { foreignKey: 'userId' });
 User.hasMany(Notification, { foreignKey: 'userId' });
 User.hasMany(Transaction, { foreignKey: 'userId' });
-User.hasMany(Facility, { foreignKey: 'ownerId', as: 'OwnedFacilities' }); // Added reverse association
+User.hasMany(Facility, { foreignKey: 'ownerId', as: 'ownedFacilities' }); // User can own facilities
 
 // Coach associations
 Coach.belongsTo(User, { foreignKey: 'userId', as: 'User' }); // Added alias
@@ -197,6 +149,33 @@ Notification.belongsTo(User, { foreignKey: 'userId' });
 
 // Transaction associations
 Transaction.belongsTo(User, { foreignKey: 'userId' });
+
+
+Coach.hasMany(models.BankAccount, {
+  foreignKey: 'coachId',
+  as: 'BankAccounts'
+});
+Coach.hasMany(models.CoachEarning, {
+  foreignKey: 'coachId',
+  as: 'Earnings'
+});
+
+
+
+// SessionPackage associations
+SessionPackage.belongsTo(Sport, { foreignKey: 'sportId', as: 'Sport' });
+SessionPackage.belongsTo(Coach, { foreignKey: 'coachId', as: 'Coach' });
+SessionPackage.belongsTo(Facility, { foreignKey: 'facilityId', as: 'Facility' });
+
+Sport.hasMany(SessionPackage, { foreignKey: 'sportId', as: 'Packages' });
+Booking.belongsTo(SessionPackage, { foreignKey: 'packageId', as: 'Package' });
+Booking.belongsTo(Sport, { foreignKey: 'sportId', as: 'Sport' });
+
+// Team associations
+Team.belongsTo(User, { foreignKey: 'userId', as: 'User' });
+Team.belongsTo(Sport, { foreignKey: 'sportId', as: 'Sport' });
+User.hasMany(Team, { foreignKey: 'userId', as: 'Teams' });
+Sport.hasMany(Team, { foreignKey: 'sportId', as: 'Teams' });
 
 module.exports = {
   sequelize,

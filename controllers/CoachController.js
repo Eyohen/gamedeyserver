@@ -51,14 +51,31 @@ class CoachController {
       ];
 
       // Add search filter
+      // if (search) {
+      //   include[0].where = {
+      //     [Op.or]: [
+      //       { firstName: { [Op.iLike]: `%${search}%` } },
+      //       { lastName: { [Op.iLike]: `%${search}%` } }
+      //     ]
+      //   };
+      // }
       if (search) {
-        include[0].where = {
-          [Op.or]: [
-            { firstName: { [Op.iLike]: `%${search}%` } },
-            { lastName: { [Op.iLike]: `%${search}%` } }
-          ]
-        };
-      }
+  const searchTerms = search.toLowerCase().split(/[,\s]+/).filter(term => term.length > 0);
+  
+  const searchConditions = searchTerms.map(term => ({
+    [Op.or]: [
+      // Search in User fields
+      { '$User.firstName$': { [Op.iLike]: `%${term}%` } },
+      { '$User.lastName$': { [Op.iLike]: `%${term}%` } },
+      { '$User.location$': { [Op.iLike]: `%${term}%` } },
+      // Search in coach bio and location
+      { bio: { [Op.iLike]: `%${term}%` } },
+      { location: { [Op.iLike]: `%${term}%` } }
+    ]
+  }));
+
+  whereClause[Op.and] = searchConditions;
+}
 
       const { count, rows: coaches } = await Coach.findAndCountAll({
         where: whereClause,

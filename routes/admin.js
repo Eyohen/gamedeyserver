@@ -96,4 +96,13 @@ router.get('/analytics', [
 // Community statistics
 router.get('/community/stats', AdminController.getCommunityStats);
 
+// Financial oversight
+router.get('/financial-overview', AdminController.getFinancialOverview);
+
+router.get('/bookings', [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
+  query('status').optional().isIn(['pending', 'confirmed', 'completed', 'cancelled', 'all']).withMessage('Invalid status')
+], AdminController.getAllBookings);
+
 module.exports = router;

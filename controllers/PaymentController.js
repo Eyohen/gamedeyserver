@@ -1,4 +1,4 @@
-// controllers/PaymentController.js - Complete implementation with your existing code
+// controllers/PaymentController.js 
 const { Payment, Booking, User, Transaction } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
@@ -97,6 +97,8 @@ class PaymentController {
         paymentStatus: 'paid',
         status: 'confirmed'
       });
+
+      await PaymentController.createCoachEarning(booking, { amount: booking.totalAmount });
 
       // Create transaction record
       await Transaction.create({
@@ -264,6 +266,8 @@ class PaymentController {
           paymentStatus: 'paid',
           status: 'confirmed'
         });
+
+        await PaymentController.createCoachEarning(payment.Booking, { amount: payment.amount });
 
         // Create transaction record
         await Transaction.create({
@@ -478,6 +482,35 @@ class PaymentController {
       return ResponseUtil.error(res, 'Failed to retrieve payment status', 500);
     }
   }
+
+  static async createCoachEarning(booking, payment) {
+  try {
+    const { CoachEarning } = require('../models');
+    
+    if (booking.coachId && booking.bookingType === 'coach') {
+      // Calculate platform fee (10%)
+      const grossAmount = parseFloat(payment.amount);
+      const platformFeeRate = 0.10; // 10%
+      const platformFee = grossAmount * platformFeeRate;
+      const netAmount = grossAmount - platformFee;
+
+      // Create earning record
+      await CoachEarning.create({
+        coachId: booking.coachId,
+        bookingId: booking.id,
+        grossAmount: grossAmount,
+        platformFee: platformFee,
+        netAmount: netAmount,
+        status: 'pending' // Available for payout
+      });
+
+      console.log(`Created coach earning: ₦${netAmount} for coach ${booking.coachId}`);
+    }
+  } catch (error) {
+    console.error('Failed to create coach earning:', error);
+    // Don't throw error - earning creation shouldn't block payment confirmation
+  }
+}
 }
 
 module.exports = PaymentController;

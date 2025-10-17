@@ -38,13 +38,29 @@ class FacilityController {
         whereClause.averageRating = { [Op.gte]: minRating };
       }
 
+
       if (search) {
-        whereClause[Op.or] = [
-          { name: { [Op.iLike]: `%${search}%` } },
-          { description: { [Op.iLike]: `%${search}%` } },
-          { address: { [Op.iLike]: `%${search}%` } }
-        ];
-      }
+  // Split search terms to handle "Lagos, Nigeria" -> ["Lagos", "Nigeria"]
+  const searchTerms = search.toLowerCase().split(/[,\s]+/).filter(term => term.length > 0);
+  
+  const searchConditions = searchTerms.map(term => ({
+    [Op.or]: [
+      { name: { [Op.iLike]: `%${term}%` } },
+      { description: { [Op.iLike]: `%${term}%` } },
+      { address: { [Op.iLike]: `%${term}%` } },
+      // Also search in location object if it contains city/state
+      ...(facility.location ? [
+        { 'location.city': { [Op.iLike]: `%${term}%` } },
+        { 'location.state': { [Op.iLike]: `%${term}%` } },
+        { 'location.country': { [Op.iLike]: `%${term}%` } }
+      ] : [])
+    ]
+  }));
+
+  // At least one search term should match
+  whereClause[Op.and] = searchConditions;
+}
+
 
       if (amenities) {
         const amenitiesArray = amenities.split(',');

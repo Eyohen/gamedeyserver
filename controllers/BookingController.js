@@ -1,138 +1,305 @@
 
 // controllers/BookingController.js
-const { Booking, User, Coach, Facility, Payment, Notification } = require('../models');
+const { Booking, User, Coach, Facility, Payment, Notification, Sport, SessionPackage } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 
 class BookingController {
   // Create a new booking
-  static async createBooking(req, res) {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
-      }
+  // static async createBooking(req, res) {
+  //   try {
+  //     const errors = validationResult(req);
+  //     if (!errors.isEmpty()) {
+  //       return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+  //     }
 
-      const {
-        facilityId,
-        coachId,
-        bookingType,
-        startTime,
-        endTime,
-        participantsCount,
-        notes
-      } = req.body;
+  //     const {
+  //       facilityId,
+  //       coachId,
+  //       bookingType,
+  //       startTime,
+  //       endTime,
+  //       participantsCount,
+  //       notes
+  //     } = req.body;
 
-      // Validate booking type
-      if (!['facility', 'coach', 'both'].includes(bookingType)) {
-        return ResponseUtil.error(res, 'Invalid booking type', 400);
-      }
+  //     // Validate booking type
+  //     if (!['facility', 'coach', 'both'].includes(bookingType)) {
+  //       return ResponseUtil.error(res, 'Invalid booking type', 400);
+  //     }
 
-      // Validate that facility or coach is provided based on booking type
-      if (bookingType === 'facility' && !facilityId) {
-        return ResponseUtil.error(res, 'Facility ID is required for facility booking', 400);
-      }
-      if (bookingType === 'coach' && !coachId) {
-        return ResponseUtil.error(res, 'Coach ID is required for coach booking', 400);
-      }
-      if (bookingType === 'both' && (!facilityId || !coachId)) {
-        return ResponseUtil.error(res, 'Both facility and coach IDs are required', 400);
-      }
+  //     // Validate that facility or coach is provided based on booking type
+  //     if (bookingType === 'facility' && !facilityId) {
+  //       return ResponseUtil.error(res, 'Facility ID is required for facility booking', 400);
+  //     }
+  //     if (bookingType === 'coach' && !coachId) {
+  //       return ResponseUtil.error(res, 'Coach ID is required for coach booking', 400);
+  //     }
+  //     if (bookingType === 'both' && (!facilityId || !coachId)) {
+  //       return ResponseUtil.error(res, 'Both facility and coach IDs are required', 400);
+  //     }
 
-      // Check if facility exists and is available
-      let facility = null;
-      if (facilityId) {
-        facility = await Facility.findByPk(facilityId);
-        if (!facility) {
-          return ResponseUtil.error(res, 'Facility not found', 404);
-        }
-        if (facility.status !== 'active') {
-          return ResponseUtil.error(res, 'Facility is not available', 400);
-        }
-      }
+  //     // Check if facility exists and is available
+  //     let facility = null;
+  //     if (facilityId) {
+  //       facility = await Facility.findByPk(facilityId);
+  //       if (!facility) {
+  //         return ResponseUtil.error(res, 'Facility not found', 404);
+  //       }
+  //       if (facility.status !== 'active') {
+  //         return ResponseUtil.error(res, 'Facility is not available', 400);
+  //       }
+  //     }
 
-      // Check if coach exists and is available
-      let coach = null;
-      if (coachId) {
-        coach = await Coach.findByPk(coachId);
-        if (!coach) {
-          return ResponseUtil.error(res, 'Coach not found', 404);
-        }
-        if (coach.status !== 'active') {
-          return ResponseUtil.error(res, 'Coach is not available', 400);
-        }
-      }
+  //     // Check if coach exists and is available
+  //     let coach = null;
+  //     if (coachId) {
+  //       coach = await Coach.findByPk(coachId);
+  //       if (!coach) {
+  //         return ResponseUtil.error(res, 'Coach not found', 404);
+  //       }
+  //       if (coach.status !== 'active') {
+  //         return ResponseUtil.error(res, 'Coach is not available', 400);
+  //       }
+  //     }
 
-      // Check for time conflicts
-      const conflictingBookings = await Booking.count({
-        where: {
-          [Op.or]: [
-            facilityId ? { facilityId } : {},
-            coachId ? { coachId } : {}
-          ],
-          status: { [Op.in]: ['pending', 'confirmed'] },
-          [Op.or]: [
-            {
-              startTime: { [Op.between]: [startTime, endTime] }
-            },
-            {
-              endTime: { [Op.between]: [startTime, endTime] }
-            },
-            {
-              [Op.and]: [
-                { startTime: { [Op.lte]: startTime } },
-                { endTime: { [Op.gte]: endTime } }
-              ]
-            }
-          ]
-        }
-      });
+  //     // Check for time conflicts
+  //     const conflictingBookings = await Booking.count({
+  //       where: {
+  //         [Op.or]: [
+  //           facilityId ? { facilityId } : {},
+  //           coachId ? { coachId } : {}
+  //         ],
+  //         status: { [Op.in]: ['pending', 'confirmed'] },
+  //         [Op.or]: [
+  //           {
+  //             startTime: { [Op.between]: [startTime, endTime] }
+  //           },
+  //           {
+  //             endTime: { [Op.between]: [startTime, endTime] }
+  //           },
+  //           {
+  //             [Op.and]: [
+  //               { startTime: { [Op.lte]: startTime } },
+  //               { endTime: { [Op.gte]: endTime } }
+  //             ]
+  //           }
+  //         ]
+  //       }
+  //     });
 
-      if (conflictingBookings > 0) {
-        return ResponseUtil.error(res, 'Time slot is not available', 409);
-      }
+  //     if (conflictingBookings > 0) {
+  //       return ResponseUtil.error(res, 'Time slot is not available', 409);
+  //     }
 
-      // Calculate total amount
-      const startDate = new Date(startTime);
-      const endDate = new Date(endTime);
-      const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+  //     // Calculate total amount
+  //     const startDate = new Date(startTime);
+  //     const endDate = new Date(endTime);
+  //     const durationHours = (endDate - startDate) / (1000 * 60 * 60);
       
-      let totalAmount = 0;
+  //     let totalAmount = 0;
+  //     if (facility) {
+  //       totalAmount += parseFloat(facility.pricePerHour) * durationHours;
+  //     }
+  //     if (coach) {
+  //       totalAmount += parseFloat(coach.hourlyRate) * durationHours;
+  //     }
+
+  //     // Create booking
+  //     const booking = await Booking.create({
+  //       userId: req.user.id,
+  //       facilityId: facilityId || null,
+  //       coachId: coachId || null,
+  //       bookingType,
+  //       startTime,
+  //       endTime,
+  //       totalAmount,
+  //       participantsCount: participantsCount || 1,
+  //       notes: notes || null
+  //     });
+
+  //     // Include related data in response
+  //     const createdBooking = await Booking.findByPk(booking.id, {
+  //       include: [
+  //         { model: Facility, as: 'Facility' },
+  //         { model: Coach, as: 'Coach', include: [{ model: User, as: 'User' }] }
+  //       ]
+  //     });
+
+  //     return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);
+  //   } catch (error) {
+  //     console.error('Create booking error:', error);
+  //     return ResponseUtil.error(res, 'Failed to create booking', 500);
+  //   }
+  // }
+  // In controllers/BookingController.js - update createBooking method
+static async createBooking(req, res) {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+    }
+
+    const {
+      facilityId,
+      coachId,
+      sportId, // NEW: Required
+      packageId, // NEW: Optional
+      bookingType,
+      startTime,
+      endTime,
+      participantsCount,
+      notes
+    } = req.body;
+
+    // Validate sport exists
+    const sport = await Sport.findByPk(sportId);
+    if (!sport) {
+      return ResponseUtil.error(res, 'Sport not found', 404);
+    }
+
+    // Validate booking type - now we support 'both' as primary option
+    if (!['facility', 'coach', 'both'].includes(bookingType)) {
+      return ResponseUtil.error(res, 'Invalid booking type', 400);
+    }
+
+    // NEW: For 'both' type, require both facility and coach
+    if (bookingType === 'both' && (!facilityId || !coachId)) {
+      return ResponseUtil.error(res, 'Both facility and coach are required for combined booking', 400);
+    }
+
+    if (bookingType === 'facility' && !facilityId) {
+      return ResponseUtil.error(res, 'Facility ID is required for facility booking', 400);
+    }
+    if (bookingType === 'coach' && !coachId) {
+      return ResponseUtil.error(res, 'Coach ID is required for coach booking', 400);
+    }
+
+    // Check if facility exists, is available, and offers the sport
+    let facility = null;
+    if (facilityId) {
+      facility = await Facility.findByPk(facilityId, {
+        include: [{
+          model: Sport,
+          as: 'Sports',
+          where: { id: sportId },
+          required: true
+        }]
+      });
+      
+      if (!facility) {
+        return ResponseUtil.error(res, 'Facility not found or does not offer this sport', 404);
+      }
+      if (facility.status !== 'active') {
+        return ResponseUtil.error(res, 'Facility is not available', 400);
+      }
+    }
+
+    // Check if coach exists, is available, and offers the sport
+    let coach = null;
+    if (coachId) {
+      coach = await Coach.findByPk(coachId, {
+        include: [{
+          model: Sport,
+          as: 'Sports',
+          where: { id: sportId },
+          required: true
+        }]
+      });
+      
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach not found or does not offer this sport', 404);
+      }
+      if (coach.status !== 'active') {
+        return ResponseUtil.error(res, 'Coach is not available', 400);
+      }
+    }
+
+    // Check for time conflicts (both facility AND coach must be available)
+    const conflictingBookings = await Booking.count({
+      where: {
+        [Op.or]: [
+          facilityId ? { facilityId } : {},
+          coachId ? { coachId } : {}
+        ],
+        status: { [Op.in]: ['pending', 'confirmed'] },
+        [Op.or]: [
+          {
+            startTime: { [Op.between]: [startTime, endTime] }
+          },
+          {
+            endTime: { [Op.between]: [startTime, endTime] }
+          },
+          {
+            [Op.and]: [
+              { startTime: { [Op.lte]: startTime } },
+              { endTime: { [Op.gte]: endTime } }
+            ]
+          }
+        ]
+      }
+    });
+
+    if (conflictingBookings > 0) {
+      return ResponseUtil.error(res, 'Time slot is not available for selected facility/coach', 409);
+    }
+
+    // Calculate total amount
+    const startDate = new Date(startTime);
+    const endDate = new Date(endTime);
+    const durationHours = (endDate - startDate) / (1000 * 60 * 60);
+    
+    let totalAmount = 0;
+    
+    // If package is selected, use package pricing
+    if (packageId) {
+      const sessionPackage = await SessionPackage.findByPk(packageId);
+      if (!sessionPackage) {
+        return ResponseUtil.error(res, 'Package not found', 404);
+      }
+      totalAmount = parseFloat(sessionPackage.pricePerSession);
+    } else {
+      // Calculate based on hourly rates
       if (facility) {
         totalAmount += parseFloat(facility.pricePerHour) * durationHours;
       }
       if (coach) {
         totalAmount += parseFloat(coach.hourlyRate) * durationHours;
       }
-
-      // Create booking
-      const booking = await Booking.create({
-        userId: req.user.id,
-        facilityId: facilityId || null,
-        coachId: coachId || null,
-        bookingType,
-        startTime,
-        endTime,
-        totalAmount,
-        participantsCount: participantsCount || 1,
-        notes: notes || null
-      });
-
-      // Include related data in response
-      const createdBooking = await Booking.findByPk(booking.id, {
-        include: [
-          { model: Facility, as: 'Facility' },
-          { model: Coach, as: 'Coach', include: [{ model: User, as: 'User' }] }
-        ]
-      });
-
-      return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);
-    } catch (error) {
-      console.error('Create booking error:', error);
-      return ResponseUtil.error(res, 'Failed to create booking', 500);
     }
+
+    // Create booking
+    const booking = await Booking.create({
+      userId: req.user.id,
+      facilityId: facilityId || null,
+      coachId: coachId || null,
+      sportId: sportId,
+      packageId: packageId || null,
+      bookingType,
+      startTime,
+      endTime,
+      totalAmount,
+      participantsCount: participantsCount || 1,
+      notes: notes || null
+    });
+
+    // Include related data in response
+    const createdBooking = await Booking.findByPk(booking.id, {
+      include: [
+        { model: Facility, as: 'Facility' },
+        { model: Coach, as: 'Coach', include: [{ model: User, as: 'User' }] },
+        { model: Sport, as: 'Sport' },
+        { model: SessionPackage, as: 'Package' }
+      ]
+    });
+
+    return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);
+  } catch (error) {
+    console.error('Create booking error:', error);
+    return ResponseUtil.error(res, 'Failed to create booking', 500);
   }
+}
 
   // Get booking by ID
   static async getBookingById(req, res) {

@@ -118,7 +118,24 @@ module.exports = (sequelize) => {
     },
     cancelledAt: {
       type: DataTypes.DATE
-    }
+    },
+    packageId: {
+      type: DataTypes.UUID,
+      allowNull: true
+    },
+    sportId: {
+      type: DataTypes.UUID,
+       allowNull: true,
+      references: {
+        model: 'sports',
+        key: 'id'
+      }
+    },
+    sessionNumber: {
+      type: DataTypes.INTEGER,
+      defaultValue: 1,
+      comment: 'For package bookings - which session number this is'
+    },
   }, {
     sequelize,
     modelName: 'Booking',

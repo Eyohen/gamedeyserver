@@ -67,6 +67,17 @@ router.post('/refresh', [
 // Logout
 router.post('/logout', AuthController.logout);
 
+// Forgot Password
+router.post('/forgot-password', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], AuthController.forgotPassword);
+
+// Reset Password
+router.post('/reset-password', [
+  body('token').notEmpty().withMessage('Reset token is required'),
+  body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
+], AuthController.resetPassword);
+
 // Admin logout
 router.post('/admin/logout', 
   // authenticateToken('admin'), 

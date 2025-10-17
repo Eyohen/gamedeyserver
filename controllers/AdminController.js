@@ -1,6 +1,6 @@
 
 // controllers/AdminController.js
-const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote } = require('../models');
+const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -751,6 +751,167 @@ class AdminController {
     }
   }
 
+  // Get financial overview (bookings stats and revenue)
+  static async getFinancialOverview(req, res) {
+    try {
+      console.log('📊 [ADMIN] getFinancialOverview called');
+      // Get booking counts by type
+      const totalBookings = await Booking.count();
+      console.log('Total bookings:', totalBookings);
+      const facilityBookings = await Booking.count({ where: { bookingType: { [Op.in]: ['facility', 'both'] } } });
+      const coachBookings = await Booking.count({ where: { bookingType: { [Op.in]: ['coach', 'both'] } } });
+
+      // Calculate total platform revenue from confirmed/completed bookings
+      const allBookings = await Booking.findAll({
+        attributes: ['totalAmount', 'status']
+      });
+
+      const totalRevenue = allBookings
+        .filter(b => b.status === 'confirmed' || b.status === 'completed')
+        .reduce((sum, booking) => sum + parseFloat(booking.totalAmount || 0), 0);
+
+      // Calculate growth percentages (comparing to previous month)
+      const today = new Date();
+      const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+      const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+
+      const bookingsThisMonth = await Booking.count({
+        where: { createdAt: { [Op.gte]: startOfMonth } }
+      });
+
+      const bookingsLastMonth = await Booking.count({
+        where: {
+          createdAt: {
+            [Op.gte]: startOfLastMonth,
+            [Op.lte]: endOfLastMonth
+          }
+        }
+      });
+
+      const totalGrowth = bookingsLastMonth > 0
+        ? ((bookingsThisMonth - bookingsLastMonth) / bookingsLastMonth * 100).toFixed(1)
+        : 0;
+
+      const overview = {
+        totalBookings,
+        facilityBookings,
+        coachBookings,
+        totalRevenue,
+        totalRevenueFormatted: `₦${totalRevenue.toLocaleString()}`,
+        growthPercentage: parseFloat(totalGrowth),
+        bookingsThisMonth,
+        bookingsLastMonth
+      };
+
+      return ResponseUtil.success(res, overview, 'Financial overview retrieved successfully');
+    } catch (error) {
+      console.error('Get financial overview error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve financial overview', 500);
+    }
+  }
+
+  // Get all bookings with revenue information
+  static async getAllBookings(req, res) {
+    try {
+      console.log('📋 [ADMIN] getAllBookings called with params:', req.query);
+      const { page = 1, limit = 20, status = 'all' } = req.query;
+      const offset = (page - 1) * limit;
+
+      const whereClause = {};
+      if (status && status !== 'all') {
+        whereClause.status = status;
+      }
+      console.log('Where clause:', whereClause);
+
+      const { count, rows: bookings } = await Booking.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: User,
+            as: 'User',
+            attributes: ['id', 'firstName', 'lastName', 'email']
+          },
+          {
+            model: Coach,
+            as: 'Coach',
+            include: [{
+              model: User,
+              as: 'User',
+              attributes: ['firstName', 'lastName']
+            }]
+          },
+          {
+            model: Facility,
+            as: 'Facility',
+            attributes: ['id', 'name']
+          },
+          {
+            model: Sport,
+            as: 'Sport',
+            attributes: ['id', 'name']
+          }
+        ],
+        limit: parseInt(limit),
+        offset,
+        order: [['createdAt', 'DESC']]
+      });
+
+      // Calculate total platform revenue
+      const allBookings = await Booking.findAll({
+        attributes: ['totalAmount', 'status']
+      });
+
+      const totalRevenue = allBookings
+        .filter(b => b.status === 'confirmed' || b.status === 'completed')
+        .reduce((sum, booking) => sum + parseFloat(booking.totalAmount || 0), 0);
+
+      console.log('Found bookings count:', count);
+
+      const formattedBookings = bookings.map(booking => {
+        const serviceName = booking.bookingType === 'coach'
+          ? (booking.Coach?.User ? `${booking.Coach.User.firstName} ${booking.Coach.User.lastName}` : 'Coach')
+          : booking.bookingType === 'facility'
+          ? (booking.Facility?.name || 'Facility')
+          : 'Combined Booking';
+
+        return {
+          id: booking.id,
+          bookingId: `#${booking.id.substring(0, 8).toUpperCase()}`,
+          userName: booking.User ? `${booking.User.firstName} ${booking.User.lastName}` : 'Unknown',
+          userEmail: booking.User?.email || 'N/A',
+          serviceName,
+          sport: booking.Sport?.name || 'N/A',
+          bookingType: booking.bookingType,
+          amount: `₦${parseFloat(booking.totalAmount || 0).toLocaleString()}`,
+          totalAmount: parseFloat(booking.totalAmount || 0),
+          status: booking.status,
+          startTime: booking.startTime,
+          endTime: booking.endTime,
+          bookingDate: booking.createdAt
+        };
+      });
+
+      console.log('Total revenue:', totalRevenue);
+      console.log('Formatted bookings count:', formattedBookings.length);
+
+      return ResponseUtil.success(res, {
+        bookings: formattedBookings,
+        totalRevenue: `₦${totalRevenue.toLocaleString()}`,
+        totalRevenueValue: totalRevenue,
+        pagination: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          pages: Math.ceil(count / limit)
+        }
+      }, 'Bookings retrieved successfully');
+
+    } catch (error) {
+      console.error('Get all bookings error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve bookings', 500);
+    }
+  }
 
 }
 
