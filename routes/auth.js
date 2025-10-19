@@ -16,6 +16,7 @@ router.post('/register', [
   body('phone').optional().isMobilePhone().withMessage('Valid phone number required'),
   body('dateOfBirth').optional().isISO8601().withMessage('Valid date of birth required'),
   body('gender').optional().isIn(['male', 'female', 'other']).withMessage('Invalid gender')
+  
 ], AuthController.registerUser);
 
 // User login

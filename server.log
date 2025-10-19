@@ -2207,26 +2207,49 @@ Require stack:
 
 Node.js v22.18.0
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
-de_modules/sequelize/lib/sequelize.js:315:28
-    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
-    at async PostgresQueryInterface.select (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/abstract/query-interface.js:407:12)
-    at async Facility.findAll (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:1140:21)
-    at async Facility.findOne (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:1240:12)
-    at async Facility.findByPk (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:1221:12)
-    at async getFacilityById (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/FacilityController.js:110:24) {
-  name: 'SequelizeDatabaseError',
-  parent: error: invalid input syntax for type uuid: "bookings"
-      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
-      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
-      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
-      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
-      at Socket.emit (node:events:518:28)
-      at addChunk (node:internal/streams/readable:561:12)
-      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
-      at Readable.push (node:internal/streams/readable:392:5)
-      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
-    length: 109,
-    severity: 'ERROR',
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
+}
+Sequelize instance created successfully
+node:internal/modules/cjs/loader:1368
+  throw err;
+  ^
+
+Error: Cannot find module '../utils/response'
+Require stack:
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1365:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1445:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js:4:22)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js'
+  ]
+}
+
+Node.js v22.18.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+rity: 'ERROR',
     code: '22P02',
     detail: undefined,
     hint: undefined,
@@ -6750,14 +6773,49 @@ Require stack:
 
 Node.js v22.18.0
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
-file/dashboard HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:37:09 +0000] "GET /api/facilities/profile/bookings?limit=10&status=confirmed HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:28 +0000] "GET /api/facilities?page=1&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:28 +0000] "GET /api/facilities?page=1&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:28 +0000] "GET /api/facilities?page=1&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/facilities/profile/bookings?page=1&limit=10 HTTP/1.1" 200 4425 "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/facilities/profile/bookings?page=1&limit=10 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/facilities/profile/bookings?page=1&limit=10 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
+}
+Sequelize instance created successfully
+node:internal/modules/cjs/loader:1368
+  throw err;
+  ^
+
+Error: Cannot find module '../utils/response'
+Require stack:
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1365:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1445:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js:4:22)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js'
+  ]
+}
+
+Node.js v22.18.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+ - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 ::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/community/posts?sortBy=recent&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 Sending success response: {
   success: true,
@@ -10234,6 +10292,48 @@ Database config: {
 }
 [32m[nodemon] restarting due to changes...[39m
 Sequelize instance created successfully
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
+}
+Sequelize instance created successfully
+node:internal/modules/cjs/loader:1368
+  throw err;
+  ^
+
+Error: Cannot find module '../utils/response'
+Require stack:
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js
+- /Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js
+    at Function._resolveFilename (node:internal/modules/cjs/loader:1365:15)
+    at defaultResolveImpl (node:internal/modules/cjs/loader:1021:19)
+    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1026:22)
+    at Function._load (node:internal/modules/cjs/loader:1175:37)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1445:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js:4:22)
+    at Module._compile (node:internal/modules/cjs/loader:1688:14) {
+  code: 'MODULE_NOT_FOUND',
+  requireStack: [
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/controllers/AuthController.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/routes/auth.js',
+    '/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js'
+  ]
+}
+
+Node.js v22.18.0
+[31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
 [32m[nodemon] starting `node index.js`[39m
 Environment: development
 Database config: {
