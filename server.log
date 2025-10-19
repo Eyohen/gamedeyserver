@@ -2249,26 +2249,29 @@ Require stack:
 
 Node.js v22.18.0
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
-rity: 'ERROR',
-    code: '22P02',
-    detail: undefined,
-    hint: undefined,
-    position: '1416',
-    internalPosition: undefined,
-    internalQuery: undefined,
-    where: undefined,
-    schema: undefined,
-    table: undefined,
-    column: undefined,
-    dataType: undefined,
-    constraint: undefined,
-    file: 'uuid.c',
-    line: '136',
-    routine: 'string_to_uuid',
-    sql: `SELECT "Facility"."id", "Facility"."ownerId", "Facility"."name", "Facility"."description", "Facility"."address", "Facility"."location", "Facility"."amenities", "Facility"."capacity", "Facility"."pricePerHour", "Facility"."operatingHours", "Facility"."contactInfo", "Facility"."verificationStatus", "Facility"."verificationDocuments", "Facility"."status", "Facility"."averageRating", "Facility"."totalReviews", "Facility"."totalBookings", "Facility"."images", "Facility"."rules", "Facility"."createdAt", "Facility"."updatedAt", "Owner"."id" AS "Owner.id", "Owner"."firstName" AS "Owner.firstName", "Owner"."lastName" AS "Owner.lastName", "Owner"."phone" AS "Owner.phone", "Sports"."id" AS "Sports.id", "Sports"."name" AS "Sports.name", "Sports"."description" AS "Sports.description", "Sports"."category" AS "Sports.category", "Sports"."icon" AS "Sports.icon", "Sports"."image" AS "Sports.image", "Sports"."popularityScore" AS "Sports.popularityScore", "Sports"."status" AS "Sports.status", "Sports"."createdAt" AS "Sports.createdAt", "Sports"."updatedAt" AS "Sports.updatedAt" FROM "facilities" AS "Facility" LEFT OUTER JOIN "users" AS "Owner" ON "Facility"."ownerId" = "Owner"."id" LEFT OUTER JOIN ( "FacilitySports" AS "Sports->FacilitySports" INNER JOIN "sports" AS "Sports" ON "Sports"."id" = "Sports->FacilitySports"."SportId") ON "Facility"."id" = "Sports->FacilitySports"."FacilityId" WHERE "Facility"."id" = 'bookings';`,
-    parameters: undefined
-  },
-  original: error: invalid input syntax for type uuid: "bookings"
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
+}
+Sequelize instance created successfully
+❌ Failed to start server: Error
+    at Query.run (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryInterface.addColumn (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/abstract/query-interface.js:184:12)
+    at async User.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:958:11)
+    at async Sequelize.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:377:9)
+    at async startServer (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js:107:5) {
+  name: 'SequelizeDatabaseError',
+  parent: error: column "emailVerificationToken" of relation "users" already exists
       at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
       at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
       at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
@@ -2278,12 +2281,12 @@ rity: 'ERROR',
       at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
       at Readable.push (node:internal/streams/readable:392:5)
       at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
-    length: 109,
+    length: 146,
     severity: 'ERROR',
-    code: '22P02',
+    code: '42701',
     detail: undefined,
     hint: undefined,
-    position: '1416',
+    position: undefined,
     internalPosition: undefined,
     internalQuery: undefined,
     where: undefined,
@@ -2292,10 +2295,47 @@ rity: 'ERROR',
     column: undefined,
     dataType: undefined,
     constraint: undefined,
-    file: 'uuid.c',
-    line: '136',
-    routine: 'string_to_uuid',
-    sql: `SELECT "Facility"."id", "Facility"."ownerId", "Facility"."name", "Facility"."description", "Facility"."address", "Facility"."location", "Facility"."amenities", "Facility"."capacity", "Facility"."pricePerHour", "Facility"."operatingHours", "Facility"."contactInfo", "Facility"."verificationStatus", "Facility"."verificationDocuments", "Facility"."status", "Facility"."averageRating", "Facility"."totalReviews", "Facility"."totalBookings", "Facility"."images", "Facility"."rules", "Facility"."createdAt", "Facility"."updatedAt", "Owner"."id" AS "Owner.id", "Owner"."firstName" AS "Owner.firstName", "Owner"."lastName" AS "Owner.lastName", "Owner"."phone" AS "Owner.phone", "Sports"."id" AS "Sports.id", "Sports"."name" AS "Sports.name", "Sports"."description" AS "Sports.description", "Sports"."category" AS "Sports.category", "Sports"."icon" AS "Sports.icon", "Sports"."image" AS "Sports.image", "Sports"."popularityScore" AS "Sports.popularityScore", "Sports"."status" AS "Sports.status", "Sports"."createdAt" AS "Sports.createdAt", "Sports"."updatedAt" AS "Sports.updatedAt" FROM "facilities" AS "Facility" LEFT OUTER JOIN "users" AS "Owner" ON "Facility"."ownerId" = "Owner"."id" LEFT OUTER JOIN ( "FacilitySports" AS "Sports->FacilitySports" INNER JOIN "sports" AS "Sports" ON "Sports"."id" = "Sports->FacilitySports"."SportId") ON "Facility"."id" = "Sports->FacilitySports"."FacilityId" WHERE "Facility"."id" = 'bookings';`,
+    file: 'tablecmds.c',
+    line: '7350',
+    routine: 'check_for_column_name_collision',
+    sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+    parameters: undefined
+  },
+  original: error: column "emailVerificationToken" of relation "users" already exists
+      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
+      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    length: 146,
+    severity: 'ERROR',
+    code: '42701',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '7350',
+    routine: 'check_for_column_name_collision',
+    sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+    parameters: undefined
+  },
+  sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+  parameters: {}
+}
+[32m[nodemon] clean exit - waiting for changes before restart[39m
+."id" LEFT OUTER JOIN ( "FacilitySports" AS "Sports->FacilitySports" INNER JOIN "sports" AS "Sports" ON "Sports"."id" = "Sports->FacilitySports"."SportId") ON "Facility"."id" = "Sports->FacilitySports"."FacilityId" WHERE "Facility"."id" = 'bookings';`,
     parameters: undefined
   },
   sql: `SELECT "Facility"."id", "Facility"."ownerId", "Facility"."name", "Facility"."description", "Facility"."address", "Facility"."location", "Facility"."amenities", "Facility"."capacity", "Facility"."pricePerHour", "Facility"."operatingHours", "Facility"."contactInfo", "Facility"."verificationStatus", "Facility"."verificationDocuments", "Facility"."status", "Facility"."averageRating", "Facility"."totalReviews", "Facility"."totalBookings", "Facility"."images", "Facility"."rules", "Facility"."createdAt", "Facility"."updatedAt", "Owner"."id" AS "Owner.id", "Owner"."firstName" AS "Owner.firstName", "Owner"."lastName" AS "Owner.lastName", "Owner"."phone" AS "Owner.phone", "Sports"."id" AS "Sports.id", "Sports"."name" AS "Sports.name", "Sports"."description" AS "Sports.description", "Sports"."category" AS "Sports.category", "Sports"."icon" AS "Sports.icon", "Sports"."image" AS "Sports.image", "Sports"."popularityScore" AS "Sports.popularityScore", "Sports"."status" AS "Sports.status", "Sports"."createdAt" AS "Sports.createdAt", "Sports"."updatedAt" AS "Sports.updatedAt" FROM "facilities" AS "Facility" LEFT OUTER JOIN "users" AS "Owner" ON "Facility"."ownerId" = "Owner"."id" LEFT OUTER JOIN ( "FacilitySports" AS "Sports->FacilitySports" INNER JOIN "sports" AS "Sports" ON "Sports"."id" = "Sports->FacilitySports"."SportId") ON "Facility"."id" = "Sports->FacilitySports"."FacilityId" WHERE "Facility"."id" = 'bookings';`,
@@ -6815,96 +6855,93 @@ Require stack:
 
 Node.js v22.18.0
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
- - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/community/posts?sortBy=recent&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-Sending success response: {
-  success: true,
-  message: 'Trending posts retrieved successfully',
-  data: [
-    Post {
-      dataValues: [Object],
-      _previousDataValues: [Object],
-      uniqno: 1,
-      _changed: Set(0) {},
-      _options: [Object],
-      isNewRecord: false,
-      User: [User],
-      Sport: null
-    },
-    Post {
-      dataValues: [Object],
-      _previousDataValues: [Object],
-      uniqno: 1,
-      _changed: Set(0) {},
-      _options: [Object],
-      isNewRecord: false,
-      User: [User],
-      Sport: null
-    }
-  ]
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
 }
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/community/posts/trending?limit=5 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/community/posts?sortBy=recent&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-Sending success response: {
-  success: true,
-  message: 'Trending posts retrieved successfully',
-  data: [
-    Post {
-      dataValues: [Object],
-      _previousDataValues: [Object],
-      uniqno: 1,
-      _changed: Set(0) {},
-      _options: [Object],
-      isNewRecord: false,
-      User: [User],
-      Sport: null
-    },
-    Post {
-      dataValues: [Object],
-      _previousDataValues: [Object],
-      uniqno: 1,
-      _changed: Set(0) {},
-      _options: [Object],
-      isNewRecord: false,
-      User: [User],
-      Sport: null
-    }
-  ]
+Sequelize instance created successfully
+❌ Failed to start server: Error
+    at Query.run (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryInterface.addColumn (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/abstract/query-interface.js:184:12)
+    at async Booking.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:958:11)
+    at async Sequelize.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:377:9)
+    at async startServer (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js:107:5) {
+  name: 'SequelizeDatabaseError',
+  parent: error: column "subtotal" of relation "bookings" contains null values
+      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
+      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    length: 152,
+    severity: 'ERROR',
+    code: '23502',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'bookings',
+    column: 'subtotal',
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '6116',
+    routine: 'ATRewriteTable',
+    sql: `ALTER TABLE "public"."bookings" ADD COLUMN "subtotal" DECIMAL(10,2) NOT NULL; COMMENT ON COLUMN "bookings"."subtotal" IS 'Amount before service fee (facility + coach fees)';`,
+    parameters: undefined
+  },
+  original: error: column "subtotal" of relation "bookings" contains null values
+      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
+      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    length: 152,
+    severity: 'ERROR',
+    code: '23502',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: 'public',
+    table: 'bookings',
+    column: 'subtotal',
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '6116',
+    routine: 'ATRewriteTable',
+    sql: `ALTER TABLE "public"."bookings" ADD COLUMN "subtotal" DECIMAL(10,2) NOT NULL; COMMENT ON COLUMN "bookings"."subtotal" IS 'Amount before service fee (facility + coach fees)';`,
+    parameters: undefined
+  },
+  sql: `ALTER TABLE "public"."bookings" ADD COLUMN "subtotal" DECIMAL(10,2) NOT NULL; COMMENT ON COLUMN "bookings"."subtotal" IS 'Amount before service fee (facility + coach fees)';`,
+  parameters: {}
 }
-::1 - - [18/Oct/2025:11:57:29 +0000] "GET /api/community/posts/trending?limit=5 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/community/posts?sortBy=recent&limit=20 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-Sending success response: {
-  success: true,
-  message: 'Dashboard stats retrieved successfully',
-  data: {
-    totalBookings: 4,
-    monthlyBookings: 2,
-    totalRevenue: 0,
-    monthlyRevenue: 0,
-    averageRating: '0.00',
-    totalReviews: 0,
-    upcomingBookings: [ [Booking], [Booking] ]
-  }
-}
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/dashboard HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/bookings?page=1&limit=15&startDate=2025-09-18 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-Sending success response: {
-  success: true,
-  message: 'Dashboard stats retrieved successfully',
-  data: {
-    totalBookings: 4,
-    monthlyBookings: 2,
-    totalRevenue: 0,
-    monthlyRevenue: 0,
-    averageRating: '0.00',
-    totalReviews: 0,
-    upcomingBookings: [ [Booking], [Booking] ]
-  }
-}
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/dashboard HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/bookings?limit=100 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/bookings?limit=100 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
-::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/bookings?page=1&limit=15&startDate=2025-09-18 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
+[32m[nodemon] clean exit - waiting for changes before restart[39m
+i/537.36"
 ::1 - - [18/Oct/2025:11:57:30 +0000] "GET /api/facilities/profile/bookings?page=1&limit=15&startDate=2025-09-18 HTTP/1.1" 304 - "http://localhost:5173/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36"
 Get facility by ID error: Error
     at Query.run (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
@@ -10585,3 +10622,89 @@ Require stack:
 
 Node.js v22.18.0
 [31m[nodemon] app crashed - waiting for file changes before starting...[39m
+[32m[nodemon] restarting due to changes...[39m
+[32m[nodemon] starting `node index.js`[39m
+Environment: development
+Database config: {
+  username: 'postgres',
+  password: '[HIDDEN]',
+  database: 'gamedey',
+  host: 'localhost',
+  port: '5432',
+  dialect: 'postgres',
+  logging: false
+}
+Sequelize instance created successfully
+❌ Failed to start server: Error
+    at Query.run (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/postgres/query.js:50:25)
+    at /Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:315:28
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async PostgresQueryInterface.addColumn (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/dialects/abstract/query-interface.js:184:12)
+    at async User.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/model.js:958:11)
+    at async Sequelize.sync (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/sequelize/lib/sequelize.js:377:9)
+    at async startServer (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/index.js:107:5) {
+  name: 'SequelizeDatabaseError',
+  parent: error: column "emailVerificationToken" of relation "users" already exists
+      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
+      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    length: 146,
+    severity: 'ERROR',
+    code: '42701',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '7350',
+    routine: 'check_for_column_name_collision',
+    sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+    parameters: undefined
+  },
+  original: error: column "emailVerificationToken" of relation "users" already exists
+      at Parser.parseErrorMessage (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:283:98)
+      at Parser.handlePacket (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:122:29)
+      at Parser.parse (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/parser.js:35:38)
+      at Socket.<anonymous> (/Users/henry/Desktop/Projects/gamedey/gamedeyserver/node_modules/pg-protocol/dist/index.js:11:42)
+      at Socket.emit (node:events:518:28)
+      at addChunk (node:internal/streams/readable:561:12)
+      at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+      at Readable.push (node:internal/streams/readable:392:5)
+      at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+    length: 146,
+    severity: 'ERROR',
+    code: '42701',
+    detail: undefined,
+    hint: undefined,
+    position: undefined,
+    internalPosition: undefined,
+    internalQuery: undefined,
+    where: undefined,
+    schema: undefined,
+    table: undefined,
+    column: undefined,
+    dataType: undefined,
+    constraint: undefined,
+    file: 'tablecmds.c',
+    line: '7350',
+    routine: 'check_for_column_name_collision',
+    sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+    parameters: undefined
+  },
+  sql: 'ALTER TABLE "public"."users" ADD COLUMN "emailVerificationToken" VARCHAR(255);',
+  parameters: {}
+}
+[32m[nodemon] clean exit - waiting for changes before restart[39m
