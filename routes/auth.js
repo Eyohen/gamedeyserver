@@ -67,14 +67,29 @@ router.post('/refresh', [
 // Logout
 router.post('/logout', AuthController.logout);
 
+// Email Verification
+router.post('/verify-email', [
+  body('token').notEmpty().withMessage('Verification token is required')
+], AuthController.verifyEmail);
+
+// Resend Verification Email
+router.post('/resend-verification', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
+], AuthController.resendVerificationEmail);
+
 // Forgot Password
 router.post('/forgot-password', [
   body('email').isEmail().normalizeEmail().withMessage('Valid email is required')
 ], AuthController.forgotPassword);
 
+// Verify OTP
+router.post('/verify-otp', [
+  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('otp').isLength({ min: 6, max: 6 }).withMessage('OTP must be 6 digits')
+], AuthController.verifyOTP);
+
 // Reset Password
 router.post('/reset-password', [
-  body('token').notEmpty().withMessage('Reset token is required'),
   body('newPassword').isLength({ min: 6 }).withMessage('New password must be at least 6 characters')
 ], AuthController.resetPassword);
 

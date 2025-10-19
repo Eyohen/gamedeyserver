@@ -85,12 +85,30 @@ module.exports = (sequelize) => {
         isDate: true
       }
     },
+    subtotal: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      validate: {
+        min: 0
+      },
+      comment: 'Amount before service fee (facility + coach fees)'
+    },
+    serviceFee: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+      defaultValue: 0.00,
+      validate: {
+        min: 0
+      },
+      comment: '7.5% service fee on subtotal'
+    },
     totalAmount: {
       type: DataTypes.DECIMAL(10, 2),
       allowNull: false,
       validate: {
         min: 0
-      }
+      },
+      comment: 'Total amount (subtotal + serviceFee)'
     },
     status: {
       type: DataTypes.ENUM('pending', 'confirmed', 'cancelled', 'completed', 'no_show'),

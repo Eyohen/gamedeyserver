@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .header h1 {
+            color: #0066CC;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            margin-bottom: 35px;
+        }
+        .content p {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #0066CC;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 102, 204, 0.3);
+            margin-top: 15px;
+        }
+        .button:hover {
+            background-color: #0052A3;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            font-size: 14px;
+            color: #888;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .warning p {
+            margin: 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        .link-text {
+            color: #0066CC;
+            word-break: break-all;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GameDey</h1>
+        </div>
+
+        <div class="content">
+            <h2 style="color: #333; font-size: 24px; margin-bottom: 20px;">Verify Your Email Address</h2>
+
+            <p>Hi {{firstName}},</p>
+
+            <p>Thank you for signing up for GameDey! We're excited to have you join our sports community.</p>
+
+            <p>To complete your registration and access all features, please verify your email address by clicking the button below:</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{verificationUrl}}" class="button">Verify Email Address</a>
+            </div>
+
+            <div class="warning">
+                <p><strong>⚠️ Important:</strong> This verification link will expire in 24 hours for security purposes.</p>
+            </div>
+
+            <p>If the button above doesn't work, copy and paste this link into your browser:</p>
+            <p class="link-text">{{verificationUrl}}</p>
+
+            <p>If you didn't create an account with GameDey, you can safely ignore this email.</p>
+        </div>
+
+        <div class="footer">
+            <p>Need help? <a href="{{supportUrl}}" style="color: #0066CC; text-decoration: none;">Contact Support</a></p>
+            <p style="margin-top: 20px;">
+                <a href="{{privacyUrl}}" style="color: #888; text-decoration: none; margin: 0 10px;">Privacy Policy</a> |
+                <a href="{{termsUrl}}" style="color: #888; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">© {{currentYear}} GameDey. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

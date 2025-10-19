@@ -4,6 +4,8 @@ const { User, Admin, Coach, Facility } = require('../models');
 const ResponseUtil = require('../utils/response');
 const JWTUtil = require('../utils/jwt');
 const { validationResult } = require('express-validator');
+const emailService = require('../utils/emailService');
+const crypto = require('crypto');
 
 class AuthController {
   // User Registration
@@ -37,6 +39,11 @@ static async registerUser(req, res) {
       }
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const verificationExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+
     // Create user
     console.log('👤 Creating user...');
     const user = await User.create({
@@ -46,15 +53,31 @@ static async registerUser(req, res) {
       password,
       phone,
       dateOfBirth,
-      gender
+      gender,
+      emailVerificationToken: verificationTokenHash,
+      emailVerificationExpires: verificationExpiry,
+      emailVerified: false
     });
 
     console.log('✅ User created successfully:', user.id);
 
+    // Send verification email
+    try {
+      await emailService.sendVerificationEmail(
+        user.email,
+        { firstName: user.firstName, lastName: user.lastName },
+        verificationToken
+      );
+      console.log('📧 Verification email sent successfully');
+    } catch (emailError) {
+      console.error('❌ Failed to send verification email:', emailError);
+      // Continue registration even if email fails
+    }
+
     // Generate tokens - ADD ERROR HANDLING HERE
     console.log('🔑 Generating tokens...');
     let token, refreshToken;
-    
+
     try {
       token = JWTUtil.generateToken({ id: user.id, type: 'user' });
       refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user' });
@@ -67,18 +90,19 @@ static async registerUser(req, res) {
         token: null,
         refreshToken: null,
         message: 'User created but token generation failed. Please try logging in.'
-      }, 'User registered successfully', 201);
+      }, 'User registered successfully. Please check your email to verify your account.', 201);
     }
 
     // Prepare response data
     const responseData = {
       user,
       token,
-      refreshToken
+      refreshToken,
+      message: 'Please check your email to verify your account.'
     };
 
     console.log('📤 Sending success response');
-    return ResponseUtil.success(res, responseData, 'User registered successfully', 201);
+    return ResponseUtil.success(res, responseData, 'User registered successfully. Please check your email to verify your account.', 201);
 
   } catch (error) {
     console.error('❌ Registration error:', error);
@@ -195,13 +219,21 @@ static async registerUser(req, res) {
         }
       }
 
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+      const verificationExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+
       // Create user first
       const user = await User.create({
         firstName,
         lastName,
         email,
         password,
-        phone
+        phone,
+        emailVerificationToken: verificationTokenHash,
+        emailVerificationExpires: verificationExpiry,
+        emailVerified: false
       });
 
       // Create coach profile
@@ -214,6 +246,18 @@ static async registerUser(req, res) {
         certifications: certifications || []
       });
 
+      // Send verification email
+      try {
+        await emailService.sendVerificationEmail(
+          user.email,
+          { firstName: user.firstName, lastName: user.lastName },
+          verificationToken
+        );
+        console.log('📧 Coach verification email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Failed to send coach verification email:', emailError);
+      }
+
       // Generate tokens
       const token = JWTUtil.generateToken({ id: user.id, type: 'user', role: 'coach' });
       const refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user', role: 'coach' });
@@ -222,8 +266,9 @@ static async registerUser(req, res) {
         user,
         coach,
         token,
-        refreshToken
-      }, 'Coach registered successfully', 201);
+        refreshToken,
+        message: 'Please check your email to verify your account.'
+      }, 'Coach registered successfully. Please check your email to verify your account.', 201);
 
     } catch (error) {
       console.error('Coach registration error:', error);
@@ -260,13 +305,21 @@ static async registerUser(req, res) {
         }
       }
 
+      // Generate verification token
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+      const verificationExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+
       // Create user first
       const user = await User.create({
         firstName,
         lastName,
         email,
         password,
-        phone
+        phone,
+        emailVerificationToken: verificationTokenHash,
+        emailVerificationExpires: verificationExpiry,
+        emailVerified: false
       });
 
       // Create facility
@@ -281,6 +334,18 @@ static async registerUser(req, res) {
         capacity
       });
 
+      // Send verification email
+      try {
+        await emailService.sendVerificationEmail(
+          user.email,
+          { firstName: user.firstName, lastName: user.lastName },
+          verificationToken
+        );
+        console.log('📧 Facility owner verification email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Failed to send facility owner verification email:', emailError);
+      }
+
       // Generate tokens
       const token = JWTUtil.generateToken({ id: user.id, type: 'user', role: 'facility_owner' });
       const refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user', role: 'facility_owner' });
@@ -289,8 +354,9 @@ static async registerUser(req, res) {
         user,
         facility,
         token,
-        refreshToken
-      }, 'Facility owner registered successfully', 201);
+        refreshToken,
+        message: 'Please check your email to verify your account.'
+      }, 'Facility owner registered successfully. Please check your email to verify your account.', 201);
 
     } catch (error) {
       console.error('Facility owner registration error:', error);
@@ -511,35 +577,37 @@ static async forgotPassword(req, res) {
       return ResponseUtil.success(res, null, 'If an account exists with this email, a password reset link has been sent');
     }
 
-    // Generate reset token
-    const crypto = require('crypto');
+    // Generate reset token and OTP
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenHash = crypto.createHash('sha256').update(resetToken).digest('hex');
-    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+    const resetTokenExpiry = new Date(Date.now() + 600000); // 10 minutes from now
 
-    // Save reset token to user
+    // Generate 6-digit OTP
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    // Save reset token and OTP to user
     await user.update({
-      preferences: {
-        ...user.preferences,
-        resetPasswordToken: resetTokenHash,
-        resetPasswordExpires: resetTokenExpiry
-      }
+      resetPasswordToken: resetTokenHash,
+      resetPasswordExpires: resetTokenExpiry,
+      resetPasswordOTP: otpHash
     });
 
-    // In production, send email with reset link
-    // For now, return the token (remove this in production)
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${resetToken}`;
+    // Send password reset email with OTP
+    try {
+      await emailService.sendForgotPasswordEmail(
+        user.email,
+        { firstName: user.firstName, lastName: user.lastName },
+        otp,
+        resetToken
+      );
+      console.log('📧 Password reset email sent successfully to:', user.email);
+    } catch (emailError) {
+      console.error('❌ Failed to send password reset email:', emailError);
+      return ResponseUtil.error(res, 'Failed to send password reset email. Please try again later.', 500);
+    }
 
-    console.log('Password reset URL:', resetUrl);
-    console.log('Reset token:', resetToken);
-
-    // TODO: Send email with resetUrl
-    // await emailService.sendPasswordResetEmail(user.email, resetUrl);
-
-    return ResponseUtil.success(res, {
-      message: 'Password reset link sent',
-      resetUrl // Remove this in production
-    }, 'If an account exists with this email, a password reset link has been sent');
+    return ResponseUtil.success(res, null, 'If an account exists with this email, a password reset email with OTP has been sent');
 
   } catch (error) {
     console.error('Forgot password error:', error);
@@ -547,7 +615,164 @@ static async forgotPassword(req, res) {
   }
 }
 
-// Reset Password - Change password using reset token
+// Verify Email - Verify user email with token
+static async verifyEmail(req, res) {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      return ResponseUtil.error(res, 'Verification token is required', 400);
+    }
+
+    // Hash the token to compare with stored hash
+    const verificationTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+    // Find user with valid verification token
+    const { Op } = require('sequelize');
+    const user = await User.findOne({
+      where: {
+        emailVerificationToken: verificationTokenHash,
+        emailVerificationExpires: {
+          [Op.gt]: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return ResponseUtil.error(res, 'Invalid or expired verification token', 400);
+    }
+
+    // Update user as verified
+    await user.update({
+      emailVerified: true,
+      emailVerificationToken: null,
+      emailVerificationExpires: null
+    });
+
+    console.log(`✅ Email verified for user: ${user.email}`);
+
+    // Determine user type
+    let userType = 'user';
+    const coach = await Coach.findOne({ where: { userId: user.id } });
+    const facility = await Facility.findOne({ where: { ownerId: user.id } });
+
+    if (coach) {
+      userType = 'coach';
+    } else if (facility) {
+      userType = 'facility';
+    }
+
+    // Send welcome email
+    try {
+      await emailService.sendWelcomeEmail(
+        user.email,
+        { firstName: user.firstName, lastName: user.lastName },
+        userType
+      );
+      console.log('📧 Welcome email sent successfully');
+    } catch (emailError) {
+      console.error('❌ Failed to send welcome email:', emailError);
+    }
+
+    return ResponseUtil.success(res, { emailVerified: true }, 'Email verified successfully! Welcome to GameDey.');
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return ResponseUtil.error(res, 'Failed to verify email', 500);
+  }
+}
+
+// Resend Verification Email
+static async resendVerificationEmail(req, res) {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return ResponseUtil.error(res, 'Email is required', 400);
+    }
+
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
+
+    if (!user) {
+      return ResponseUtil.error(res, 'User not found', 404);
+    }
+
+    if (user.emailVerified) {
+      return ResponseUtil.error(res, 'Email is already verified', 400);
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
+    const verificationExpiry = new Date(Date.now() + 24 * 3600000); // 24 hours from now
+
+    // Update user with new token
+    await user.update({
+      emailVerificationToken: verificationTokenHash,
+      emailVerificationExpires: verificationExpiry
+    });
+
+    // Send verification email
+    try {
+      await emailService.sendVerificationEmail(
+        user.email,
+        { firstName: user.firstName, lastName: user.lastName },
+        verificationToken
+      );
+      console.log('📧 Verification email resent successfully');
+    } catch (emailError) {
+      console.error('❌ Failed to resend verification email:', emailError);
+      return ResponseUtil.error(res, 'Failed to send verification email', 500);
+    }
+
+    return ResponseUtil.success(res, null, 'Verification email has been resent. Please check your inbox.');
+
+  } catch (error) {
+    console.error('Resend verification email error:', error);
+    return ResponseUtil.error(res, 'Failed to resend verification email', 500);
+  }
+}
+
+// Verify OTP for password reset
+static async verifyOTP(req, res) {
+  try {
+    const { email, otp } = req.body;
+
+    if (!email || !otp) {
+      return ResponseUtil.error(res, 'Email and OTP are required', 400);
+    }
+
+    // Hash the OTP to compare with stored hash
+    const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+    // Find user with valid OTP
+    const { Op } = require('sequelize');
+    const user = await User.findOne({
+      where: {
+        email,
+        resetPasswordOTP: otpHash,
+        resetPasswordExpires: {
+          [Op.gt]: new Date()
+        }
+      }
+    });
+
+    if (!user) {
+      return ResponseUtil.error(res, 'Invalid or expired OTP', 400);
+    }
+
+    console.log(`✅ OTP verified for user: ${user.email}`);
+
+    return ResponseUtil.success(res, { otpVerified: true }, 'OTP verified successfully. You can now reset your password.');
+
+  } catch (error) {
+    console.error('OTP verification error:', error);
+    return ResponseUtil.error(res, 'Failed to verify OTP', 500);
+  }
+}
+
+// Reset Password - Change password using reset token or OTP
 static async resetPassword(req, res) {
   try {
     const errors = validationResult(req);
@@ -555,39 +780,57 @@ static async resetPassword(req, res) {
       return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
     }
 
-    const { token, newPassword } = req.body;
+    const { token, email, otp, newPassword } = req.body;
 
-    if (!token || !newPassword) {
-      return ResponseUtil.error(res, 'Token and new password are required', 400);
+    if (!newPassword) {
+      return ResponseUtil.error(res, 'New password is required', 400);
     }
 
-    // Hash the token from URL to compare with stored hash
-    const crypto = require('crypto');
-    const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
-
-    // Find user with valid reset token
+    let user;
     const { Op } = require('sequelize');
-    const user = await User.findOne({
-      where: {
-        'preferences.resetPasswordToken': resetTokenHash,
-        'preferences.resetPasswordExpires': {
-          [Op.gt]: new Date()
+
+    // Check if using token or OTP
+    if (token) {
+      // Hash the token from URL to compare with stored hash
+      const resetTokenHash = crypto.createHash('sha256').update(token).digest('hex');
+
+      // Find user with valid reset token
+      user = await User.findOne({
+        where: {
+          resetPasswordToken: resetTokenHash,
+          resetPasswordExpires: {
+            [Op.gt]: new Date()
+          }
         }
-      }
-    });
+      });
+    } else if (email && otp) {
+      // Hash the OTP to compare with stored hash
+      const otpHash = crypto.createHash('sha256').update(otp).digest('hex');
+
+      // Find user with valid OTP
+      user = await User.findOne({
+        where: {
+          email,
+          resetPasswordOTP: otpHash,
+          resetPasswordExpires: {
+            [Op.gt]: new Date()
+          }
+        }
+      });
+    } else {
+      return ResponseUtil.error(res, 'Either token or email with OTP is required', 400);
+    }
 
     if (!user) {
-      return ResponseUtil.error(res, 'Invalid or expired reset token', 400);
+      return ResponseUtil.error(res, 'Invalid or expired reset token/OTP', 400);
     }
 
-    // Update password
+    // Update password and clear reset tokens
     await user.update({
       password: newPassword, // Will be hashed by the model hook
-      preferences: {
-        ...user.preferences,
-        resetPasswordToken: null,
-        resetPasswordExpires: null
-      }
+      resetPasswordToken: null,
+      resetPasswordExpires: null,
+      resetPasswordOTP: null
     });
 
     console.log(`✅ Password reset successful for user: ${user.email}`);

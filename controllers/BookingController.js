@@ -4,6 +4,7 @@ const { Booking, User, Coach, Facility, Payment, Notification, Sport, SessionPac
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
+const emailService = require('../utils/emailService');
 
 class BookingController {
   // Create a new booking
@@ -245,29 +246,36 @@ static async createBooking(req, res) {
       return ResponseUtil.error(res, 'Time slot is not available for selected facility/coach', 409);
     }
 
-    // Calculate total amount
+    // Calculate subtotal (before service fee)
     const startDate = new Date(startTime);
     const endDate = new Date(endTime);
     const durationHours = (endDate - startDate) / (1000 * 60 * 60);
-    
-    let totalAmount = 0;
-    
+
+    let subtotal = 0;
+
     // If package is selected, use package pricing
     if (packageId) {
       const sessionPackage = await SessionPackage.findByPk(packageId);
       if (!sessionPackage) {
         return ResponseUtil.error(res, 'Package not found', 404);
       }
-      totalAmount = parseFloat(sessionPackage.pricePerSession);
+      subtotal = parseFloat(sessionPackage.pricePerSession);
     } else {
       // Calculate based on hourly rates
       if (facility) {
-        totalAmount += parseFloat(facility.pricePerHour) * durationHours;
+        subtotal += parseFloat(facility.pricePerHour) * durationHours;
       }
       if (coach) {
-        totalAmount += parseFloat(coach.hourlyRate) * durationHours;
+        subtotal += parseFloat(coach.hourlyRate) * durationHours;
       }
     }
+
+    // Calculate service fee (7.5% of subtotal)
+    const serviceFeePercentage = 0.075; // 7.5%
+    const serviceFee = parseFloat((subtotal * serviceFeePercentage).toFixed(2));
+
+    // Calculate total amount (subtotal + service fee)
+    const totalAmount = parseFloat((subtotal + serviceFee).toFixed(2));
 
     // Create booking
     const booking = await Booking.create({
@@ -279,6 +287,8 @@ static async createBooking(req, res) {
       bookingType,
       startTime,
       endTime,
+      subtotal,
+      serviceFee,
       totalAmount,
       participantsCount: participantsCount || 1,
       notes: notes || null
@@ -290,9 +300,51 @@ static async createBooking(req, res) {
         { model: Facility, as: 'Facility' },
         { model: Coach, as: 'Coach', include: [{ model: User, as: 'User' }] },
         { model: Sport, as: 'Sport' },
-        { model: SessionPackage, as: 'Package' }
+        { model: SessionPackage, as: 'Package' },
+        { model: User, as: 'User' }
       ]
     });
+
+    // Send booking confirmation email if booking is auto-confirmed
+    if (createdBooking.status === 'confirmed' && createdBooking.User) {
+      try {
+        const bookingName = createdBooking.bookingType === 'facility'
+          ? createdBooking.Facility?.name
+          : createdBooking.bookingType === 'coach'
+          ? `${createdBooking.Coach?.User?.firstName} ${createdBooking.Coach?.User?.lastName}`
+          : `${createdBooking.Facility?.name} with ${createdBooking.Coach?.User?.firstName} ${createdBooking.Coach?.User?.lastName}`;
+
+        const startDate = new Date(createdBooking.startTime);
+        const durationMs = new Date(createdBooking.endTime) - startDate;
+        const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+        const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+        const durationStr = `${durationHours}h ${durationMinutes}m`;
+
+        await emailService.sendBookingConfirmationEmail(
+          createdBooking.User.email,
+          {
+            firstName: createdBooking.User.firstName,
+            lastName: createdBooking.User.lastName
+          },
+          {
+            id: createdBooking.id,
+            name: bookingName,
+            type: createdBooking.bookingType,
+            date: startDate,
+            time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+            duration: durationStr,
+            subtotal: createdBooking.subtotal,
+            serviceFee: createdBooking.serviceFee,
+            amount: createdBooking.totalAmount,
+            currency: 'NGN'
+          }
+        );
+        console.log('📧 Booking confirmation email sent successfully');
+      } catch (emailError) {
+        console.error('❌ Failed to send booking confirmation email:', emailError);
+        // Don't fail the booking if email fails
+      }
+    }
 
     return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);
   } catch (error) {
@@ -384,11 +436,52 @@ static async createBooking(req, res) {
 
       await booking.update(updateData);
 
+      // Send booking confirmation email if status changed to 'confirmed'
+      if (status === 'confirmed') {
+        try {
+          const user = await User.findByPk(booking.userId);
+          if (user) {
+            const bookingName = booking.bookingType === 'facility'
+              ? booking.Facility?.name
+              : booking.bookingType === 'coach'
+              ? `${booking.Coach?.User?.firstName} ${booking.Coach?.User?.lastName}`
+              : `${booking.Facility?.name} with Coach`;
+
+            const startDate = new Date(booking.startTime);
+            const durationMs = new Date(booking.endTime) - startDate;
+            const durationHours = Math.floor(durationMs / (1000 * 60 * 60));
+            const durationMinutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+            const durationStr = `${durationHours}h ${durationMinutes}m`;
+
+            await emailService.sendBookingConfirmationEmail(
+              user.email,
+              { firstName: user.firstName, lastName: user.lastName },
+              {
+                id: booking.id,
+                name: bookingName,
+                type: booking.bookingType,
+                date: startDate,
+                time: startDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+                duration: durationStr,
+                subtotal: booking.subtotal,
+                serviceFee: booking.serviceFee,
+                amount: booking.totalAmount,
+                currency: 'NGN'
+              }
+            );
+            console.log('📧 Booking confirmation email sent successfully');
+          }
+        } catch (emailError) {
+          console.error('❌ Failed to send booking confirmation email:', emailError);
+          // Don't fail the status update if email fails
+        }
+      }
+
       // Create notification for relevant parties
-      const notificationMessage = `Booking ${status === 'confirmed' ? 'confirmed' : 
-                                                status === 'cancelled' ? 'cancelled' : 
+      const notificationMessage = `Booking ${status === 'confirmed' ? 'confirmed' :
+                                                status === 'cancelled' ? 'cancelled' :
                                                 `updated to ${status}`}`;
-      
+
       // Notify booking owner if status changed by others
       if (!isBookingOwner) {
         await Notification.create({

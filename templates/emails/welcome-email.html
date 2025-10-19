@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to GameDey</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 40px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+        }
+        .header h1 {
+            color: #0066CC;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            margin-bottom: 35px;
+        }
+        .content p {
+            font-size: 16px;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .banner {
+            background: linear-gradient(135deg, #0066CC 0%, #0052A3 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 30px 0;
+        }
+        .banner h2 {
+            margin: 0;
+            font-size: 32px;
+            font-weight: 700;
+        }
+        .button {
+            display: inline-block;
+            padding: 14px 32px;
+            background-color: #0066CC;
+            color: #fff;
+            text-decoration: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            box-shadow: 0 2px 5px rgba(0, 102, 204, 0.3);
+            margin: 10px;
+        }
+        .button:hover {
+            background-color: #0052A3;
+        }
+        .button-secondary {
+            background-color: #6c757d;
+        }
+        .button-secondary:hover {
+            background-color: #5a6268;
+        }
+        .features {
+            margin: 30px 0;
+        }
+        .feature-item {
+            padding: 15px;
+            margin: 15px 0;
+            background-color: #f8f9fa;
+            border-radius: 6px;
+            border-left: 4px solid #0066CC;
+        }
+        .feature-item h3 {
+            margin: 0 0 8px 0;
+            color: #0066CC;
+            font-size: 18px;
+        }
+        .feature-item p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            font-size: 14px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>GameDey</h1>
+        </div>
+
+        <div class="banner">
+            <h2>Welcome to GameDey! 🎉</h2>
+            <p style="margin: 10px 0 0 0; font-size: 18px;">Your sports journey starts here</p>
+        </div>
+
+        <div class="content">
+            <p>Hi {{firstName}},</p>
+
+            <p>Thank you for verifying your email! Your GameDey account has been successfully activated and you're all set to explore our sports platform.</p>
+
+            <p>As a {{userType}}, you now have access to all the amazing features GameDey has to offer.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{dashboardUrl}}" class="button">Go to Dashboard</a>
+                <a href="{{exploreUrl}}" class="button button-secondary">Explore Sports</a>
+            </div>
+
+            <div class="features">
+                <h3 style="color: #333; font-size: 20px; margin-bottom: 20px;">What You Can Do:</h3>
+
+                <div class="feature-item">
+                    <h3>🏃 Book Training Sessions</h3>
+                    <p>Find and book sessions with certified coaches in your area</p>
+                </div>
+
+                <div class="feature-item">
+                    <h3>🏟️ Reserve Facilities</h3>
+                    <p>Book sports facilities for your games and practice sessions</p>
+                </div>
+
+                <div class="feature-item">
+                    <h3>👥 Join Communities</h3>
+                    <p>Connect with other sports enthusiasts and share your passion</p>
+                </div>
+
+                <div class="feature-item">
+                    <h3>📊 Track Your Progress</h3>
+                    <p>Monitor your bookings, reviews, and sports activities</p>
+                </div>
+            </div>
+
+            <p style="margin-top: 30px;">If you have any questions or need assistance getting started, our support team is here to help.</p>
+        </div>
+
+        <div class="footer">
+            <p>Need help? <a href="{{supportUrl}}" style="color: #0066CC; text-decoration: none;">Contact Support</a></p>
+            <p style="margin-top: 20px;">
+                <a href="{{privacyUrl}}" style="color: #888; text-decoration: none; margin: 0 10px;">Privacy Policy</a> |
+                <a href="{{termsUrl}}" style="color: #888; text-decoration: none; margin: 0 10px;">Terms of Service</a>
+            </p>
+            <p style="margin-top: 20px; font-size: 12px;">© {{currentYear}} GameDey. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -110,6 +110,26 @@ module.exports = (sequelize) => {
     walletBalance: {
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0.00
+    },
+    emailVerificationToken: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    emailVerificationExpires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    resetPasswordToken: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    resetPasswordExpires: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
+    resetPasswordOTP: {
+      type: DataTypes.STRING,
+      allowNull: true
     }
   }, {
     sequelize,
