@@ -21,6 +21,7 @@ class AdminController {
         where: { createdAt: { [Op.gte]: startOfMonth } }
       });
 
+      
       // Get coach statistics
       const totalCoaches = await Coach.count();
       const verifiedCoaches = await Coach.count({ where: { verificationStatus: 'verified' } });
