@@ -4,7 +4,9 @@
   "description": "Backend API for gamedey sports platform",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
     "dev": "nodemon index.js",
+    "migrate": "node scripts/fix-booking-schema.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],

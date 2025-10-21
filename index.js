@@ -96,14 +96,15 @@ app.use(errorHandler);
 // Database synchronization and server start
 const startServer = async () => {
   try {
-    let syncOptions = { alter: true };
+    let syncOptions = {};
 
     if (process.env.NODE_ENV === "development") {
-      // In development, you might want to force sync
+      // Only use alter in development - NEVER in production
+      syncOptions = { alter: true };
       // syncOptions = { force: true }; // Uncomment to reset DB
     }
 
-    // Sync database
+    // Sync database (in production, use migrations instead)
     await sequelize.sync(syncOptions);
     console.log('✅ Database synchronized');
 
