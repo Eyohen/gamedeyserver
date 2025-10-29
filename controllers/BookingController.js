@@ -5,6 +5,7 @@ const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
 const emailService = require('../utils/emailService');
+const ChatController = require('./ChatController');
 
 class BookingController {
   // Create a new booking
@@ -344,6 +345,15 @@ static async createBooking(req, res) {
         console.error('❌ Failed to send booking confirmation email:', emailError);
         // Don't fail the booking if email fails
       }
+
+      // Create conversation for chat when booking is auto-confirmed
+      try {
+        const conversation = await ChatController.createConversationForBooking(createdBooking.id);
+        console.log('💬 Chat conversation created successfully:', conversation.id);
+      } catch (chatError) {
+        console.error('❌ Failed to create chat conversation:', chatError);
+        // Don't fail the booking if chat creation fails
+      }
     }
 
     return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);
@@ -474,6 +484,15 @@ static async createBooking(req, res) {
         } catch (emailError) {
           console.error('❌ Failed to send booking confirmation email:', emailError);
           // Don't fail the status update if email fails
+        }
+
+        // Create conversation for chat when booking is confirmed
+        try {
+          const conversation = await ChatController.createConversationForBooking(booking.id);
+          console.log('💬 Chat conversation created successfully:', conversation.id);
+        } catch (chatError) {
+          console.error('❌ Failed to create chat conversation:', chatError);
+          // Don't fail the status update if chat creation fails
         }
       }
 

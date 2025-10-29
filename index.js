@@ -1,11 +1,13 @@
 // index.js
 require('dotenv').config();
 const express = require('express');
+const http = require('http');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const { sequelize } = require('./models');
 const errorHandler = require('./middleware/errorHandler');
+const { initializeSocket } = require('./config/socket');
 
 // Import routes
 const auth = require('./routes/auth');
@@ -20,9 +22,15 @@ const payment = require('./routes/payment');
 const review = require('./routes/review');
 const coachBankRoutes = require('./routes/coach-bank');
 const teams = require('./routes/teams');
+const chat = require('./routes/chat');
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.API_PORT || 3000;
+
+// Initialize Socket.IO
+const io = initializeSocket(server);
+
 app.use(cors());
 
 app.use(helmet());
@@ -51,6 +59,7 @@ app.use('/api/payments', payment);
 app.use('/api/reviews', review);
 app.use('/api/coach-banking', coachBankRoutes);
 app.use('/api/teams', teams);
+app.use('/api/chat', chat);
 
 // Health check route
 app.get('/health', (req, res) => {
@@ -78,7 +87,8 @@ app.get('/api', (req, res) => {
       bookings: '/api/bookings',
       community: '/api/community',
       payments: '/api/payments',
-      reviews: '/api/reviews'
+      reviews: '/api/reviews',
+      chat: '/api/chat'
     }
   });
 });
@@ -108,11 +118,12 @@ const startServer = async () => {
     await sequelize.sync(syncOptions);
     console.log('✅ Database synchronized');
 
-    app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
       console.log(`📱 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`💳 Paystack Integration: ${process.env.PAYSTACK_SECRET_KEY ? 'Enabled' : 'Disabled'}`);
       console.log(`🌐 Frontend URL: ${process.env.FRONTEND_URL || 'Not configured'}`);
+      console.log(`💬 Chat System: Papersignal + Socket.IO Enabled`);
       // console.log(`🔗 Webhook URL: ${process.env.BACKEND_URL || 'localhost'}/api/payments/webhook`);
     });
   } catch (error) {

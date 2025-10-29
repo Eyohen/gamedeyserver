@@ -62,6 +62,7 @@ const BankAccount = require('./BankAccount')(sequelize);
 const CoachEarning = require('./CoachEarning')(sequelize);
 const SessionPackage = require('./SessionPackage')(sequelize);
 const Team = require('./Team')(sequelize);
+const Conversation = require('./Conversation')(sequelize);
 
 // Define associations
 const models = {
@@ -81,7 +82,8 @@ const models = {
   BankAccount,
   CoachEarning,
   SessionPackage,
-  Team
+  Team,
+  Conversation
 };
 
 
@@ -176,6 +178,17 @@ Team.belongsTo(User, { foreignKey: 'userId', as: 'User' });
 Team.belongsTo(Sport, { foreignKey: 'sportId', as: 'Sport' });
 User.hasMany(Team, { foreignKey: 'userId', as: 'Teams' });
 Sport.hasMany(Team, { foreignKey: 'sportId', as: 'Teams' });
+
+// Conversation associations
+Conversation.belongsTo(Booking, { foreignKey: 'bookingId', as: 'booking' });
+Conversation.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+Conversation.belongsTo(Coach, { foreignKey: 'coachId', as: 'coach' });
+Conversation.belongsTo(Facility, { foreignKey: 'facilityId', as: 'facility' });
+
+User.hasMany(Conversation, { foreignKey: 'userId', as: 'conversations' });
+Coach.hasMany(Conversation, { foreignKey: 'coachId', as: 'conversations' });
+Facility.hasMany(Conversation, { foreignKey: 'facilityId', as: 'conversations' });
+Booking.hasOne(Conversation, { foreignKey: 'bookingId', as: 'conversation' });
 
 module.exports = {
   sequelize,
