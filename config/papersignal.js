@@ -4,7 +4,7 @@ const axios = require('axios');
 class PapersignalClient {
   constructor() {
     this.apiKey = process.env.PAPERSIGNAL_API_KEY;
-    this.baseURL = process.env.PAPERSIGNAL_API_URL || 'http://localhost:3001';
+    this.baseURL = process.env.PAPERSIGNAL_API_URL || 'https://mailserver-production.up.railway.app';
 
     if (!this.apiKey) {
       throw new Error('PAPERSIGNAL_API_KEY is required in environment variables');
