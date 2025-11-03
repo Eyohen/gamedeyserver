@@ -1,21 +1,23 @@
 # GameDey Email System Documentation
 
 ## Overview
-The GameDey platform uses **SendGrid** for sending transactional emails including email verification, password reset with OTP, welcome emails, and booking confirmations.
+The GameDey platform uses **Resend** for sending transactional emails including email verification, password reset with OTP, welcome emails, and booking confirmations.
 
 ## Setup Instructions
 
-### 1. SendGrid Configuration
-1. Sign up for a SendGrid account at [https://sendgrid.com](https://sendgrid.com)
-2. Create an API key from the SendGrid dashboard
-3. Verify a sender email address in SendGrid
+### 1. Resend Configuration
+1. Sign up for a Resend account at [https://resend.com](https://resend.com)
+2. Create an API key from the Resend dashboard (Settings → API Keys)
+3. Add and verify your domain in Resend (Settings → Domains)
 4. Update the `.env` file with your credentials:
 
 ```env
-SENDGRID_API_KEY=your-actual-sendgrid-api-key
-SENDGRID_FROM_EMAIL=noreply@gamedey.com
+RESEND_API_KEY=re_your-actual-resend-api-key
+RESEND_FROM_EMAIL=noreply@yourdomain.com
 FRONTEND_URL=http://localhost:5173
 ```
+
+**Note:** For testing, you can use Resend's default email: `onboarding@resend.dev`
 
 ### 2. Database Migration
 Run the migration to add email verification and password reset fields to the User table:
@@ -370,26 +372,26 @@ await emailService.sendVerificationEmail(
 );
 ```
 
-### SendGrid Sandbox Mode
-For testing without sending real emails, use SendGrid's sandbox mode:
-1. Go to SendGrid Settings → Mail Settings
-2. Enable "Sandbox Mode"
-3. Emails will be validated but not sent
+### Resend Test Mode
+For testing, Resend provides a test email address:
+- Use `onboarding@resend.dev` as the from address
+- All emails are delivered without domain verification
+- Perfect for development and testing
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **SendGrid API Key Error**
+1. **Resend API Key Error**
    - Verify API key is correct in `.env`
-   - Check API key permissions in SendGrid dashboard
-   - Ensure key has "Mail Send" permission
+   - Check API key is active in Resend dashboard
+   - Ensure key starts with `re_`
 
 2. **Email Not Received**
    - Check spam/junk folder
-   - Verify sender email is verified in SendGrid
-   - Check SendGrid activity log
-   - Ensure SENDGRID_FROM_EMAIL matches verified sender
+   - Verify domain is verified in Resend (if using custom domain)
+   - Check Resend logs (Dashboard → Logs)
+   - For testing, use `onboarding@resend.dev` as from address
 
 3. **Template Not Found**
    - Ensure all templates exist in `templates/emails/`
@@ -410,8 +412,8 @@ For testing without sending real emails, use SendGrid's sandbox mode:
 
 ```env
 # Required for email system
-SENDGRID_API_KEY=         # Your SendGrid API key
-SENDGRID_FROM_EMAIL=      # Verified sender email
+RESEND_API_KEY=           # Your Resend API key (starts with re_)
+RESEND_FROM_EMAIL=        # Verified sender email (or onboarding@resend.dev for testing)
 FRONTEND_URL=             # Frontend URL for links in emails
 
 # Database (required for User model)
@@ -428,21 +430,31 @@ JWT_REFRESH_SECRET=your-refresh-secret
 
 ## Next Steps
 
-1. **Get SendGrid API Key**: Sign up and create an API key
-2. **Verify Sender Email**: Add and verify your sender email in SendGrid
-3. **Update .env**: Add your actual SendGrid credentials
+1. **Get Resend API Key**: Sign up at [resend.com](https://resend.com) and create an API key
+2. **Verify Domain** (Optional): Add and verify your domain in Resend for custom sender emails
+3. **Update .env**: Add your actual Resend credentials
 4. **Run Migration**: Execute database migration
 5. **Test Registration**: Register a test user and check email
 6. **Customize Templates**: Update HTML templates with your branding
 7. **Configure Frontend**: Set up verification and reset password pages
 
+## Why Resend?
+
+Resend offers several advantages over SendGrid:
+- **Simpler API**: More intuitive and developer-friendly
+- **Better Deliverability**: Modern infrastructure with excellent inbox placement
+- **Great DX**: Clean dashboard, better logging, and easier debugging
+- **Generous Free Tier**: 100 emails/day for free (vs SendGrid's 100/day)
+- **No Credit Card Required**: Start testing immediately
+- **Fast Integration**: Simpler setup with fewer configuration steps
+
 ## Support
 
 For issues or questions:
-- Check SendGrid documentation: https://docs.sendgrid.com
+- Check Resend documentation: https://resend.com/docs
 - Review server logs for detailed error messages
 - Contact support team
 
 ---
 
-**Last Updated**: January 19, 2025
+**Last Updated**: November 2, 2025

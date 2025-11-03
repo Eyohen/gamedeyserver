@@ -1,10 +1,10 @@
 // utils/emailService.js
-const sgMail = require('@sendgrid/mail');
+const { Resend } = require('resend');
 const fs = require('fs').promises;
 const path = require('path');
 
-// Set SendGrid API key
-sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Initialize Resend with API key
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 // Load and process email template
 const loadTemplate = async (templateName, variables = {}) => {
@@ -49,25 +49,26 @@ const sendVerificationEmail = async (userEmail, userDetails, verificationToken) 
 
     const htmlContent = await loadTemplate('email-verification', templateVariables);
 
-    const mailOptions = {
-      from: {
-        email: process.env.SENDGRID_FROM_EMAIL || 'info@gamedey.com',
-        name: 'GameDey'
-      },
+    const result = await resend.emails.send({
+      from: `GameDey <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: userEmail,
       subject: 'Verify Your Email - GameDey',
       html: htmlContent
-    };
+    });
 
-    const result = await sgMail.send(mailOptions);
+    console.log('📧 Resend API Response:', JSON.stringify(result, null, 2));
     console.log('Verification email sent successfully to:', userEmail);
-    return { success: true, messageId: result[0].headers['x-message-id'] };
+
+    if (result.error) {
+      console.error('❌ Resend returned an error:', result.error);
+      return { success: false, error: result.error.message };
+    }
+
+    return { success: true, messageId: result.id };
 
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
+    console.error('❌ Error sending verification email:', error);
+    console.error('Error details:', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 };
@@ -90,25 +91,26 @@ const sendWelcomeEmail = async (userEmail, userDetails, userType = 'user') => {
 
     const htmlContent = await loadTemplate('welcome-email', templateVariables);
 
-    const mailOptions = {
-      from: {
-        email: process.env.SENDGRID_FROM_EMAIL || 'info@gamedey.com',
-        name: 'GameDey'
-      },
+    const result = await resend.emails.send({
+      from: `GameDey <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: userEmail,
       subject: 'Welcome to GameDey! 🎉',
       html: htmlContent
-    };
+    });
 
-    const result = await sgMail.send(mailOptions);
+    console.log('📧 Resend API Response:', JSON.stringify(result, null, 2));
     console.log('Welcome email sent successfully to:', userEmail);
-    return { success: true, messageId: result[0].headers['x-message-id'] };
+
+    if (result.error) {
+      console.error('❌ Resend returned an error:', result.error);
+      return { success: false, error: result.error.message };
+    }
+
+    return { success: true, messageId: result.id };
 
   } catch (error) {
-    console.error('Error sending welcome email:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
+    console.error('❌ Error sending welcome email:', error);
+    console.error('Error details:', error.response?.data || error.message);
     return { success: false, error: error.message };
   }
 };
@@ -129,25 +131,18 @@ const sendForgotPasswordEmail = async (userEmail, userDetails, otp, resetToken) 
 
     const htmlContent = await loadTemplate('forgot-password', templateVariables);
 
-    const mailOptions = {
-      from: {
-        email: process.env.SENDGRID_FROM_EMAIL || 'info@gamedey.com',
-        name: 'GameDey Security'
-      },
+    const result = await resend.emails.send({
+      from: `GameDey Security <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: userEmail,
       subject: 'Reset Your Password - GameDey',
       html: htmlContent
-    };
+    });
 
-    const result = await sgMail.send(mailOptions);
     console.log('Password reset email sent successfully to:', userEmail);
-    return { success: true, messageId: result[0].headers['x-message-id'] };
+    return { success: true, messageId: result.id };
 
   } catch (error) {
     console.error('Error sending password reset email:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
     return { success: false, error: error.message };
   }
 };
@@ -176,25 +171,18 @@ const sendBookingConfirmationEmail = async (userEmail, userDetails, bookingDetai
 
     const htmlContent = await loadTemplate('booking-confirmation', templateVariables);
 
-    const mailOptions = {
-      from: {
-        email: process.env.SENDGRID_FROM_EMAIL || 'info@gamedey.com',
-        name: 'GameDey'
-      },
+    const result = await resend.emails.send({
+      from: `GameDey <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: userEmail,
       subject: 'Booking Confirmed - GameDey',
       html: htmlContent
-    };
+    });
 
-    const result = await sgMail.send(mailOptions);
     console.log('Booking confirmation email sent successfully to:', userEmail);
-    return { success: true, messageId: result[0].headers['x-message-id'] };
+    return { success: true, messageId: result.id };
 
   } catch (error) {
     console.error('Error sending booking confirmation email:', error);
-    if (error.response) {
-      console.error('SendGrid error details:', error.response.body);
-    }
     return { success: false, error: error.message };
   }
 };
@@ -202,12 +190,12 @@ const sendBookingConfirmationEmail = async (userEmail, userDetails, bookingDetai
 // Test email configuration
 const testEmailConnection = async () => {
   try {
-    // SendGrid doesn't have a verify method like nodemailer
+    // Resend doesn't have a verify method like nodemailer
     // We can test by checking if the API key is set
-    if (!process.env.SENDGRID_API_KEY) {
-      throw new Error('SENDGRID_API_KEY is not set');
+    if (!process.env.RESEND_API_KEY) {
+      throw new Error('RESEND_API_KEY is not set');
     }
-    console.log('SendGrid email service configured');
+    console.log('Resend email service configured');
     return { success: true };
   } catch (error) {
     console.error('Email service configuration failed:', error);

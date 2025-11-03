@@ -153,6 +153,11 @@ static async registerUser(req, res) {
         return ResponseUtil.error(res, 'Invalid credentials', 401);
       }
 
+      // Check if email is verified
+      if (!user.emailVerified) {
+        return ResponseUtil.error(res, 'Please verify your email before logging in. Check your inbox for the verification link.', 403);
+      }
+
       // Check if user is active
       if (!user.isActive()) {
         return ResponseUtil.error(res, 'Account is suspended', 401);
@@ -674,7 +679,16 @@ static async verifyEmail(req, res) {
       console.error('❌ Failed to send welcome email:', emailError);
     }
 
-    return ResponseUtil.success(res, { emailVerified: true }, 'Email verified successfully! Welcome to GameDey.');
+    return ResponseUtil.success(res, {
+      emailVerified: true,
+      userType: userType,
+      user: {
+        id: user.id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email
+      }
+    }, 'Email verified successfully! Welcome to GameDey.');
 
   } catch (error) {
     console.error('Email verification error:', error);

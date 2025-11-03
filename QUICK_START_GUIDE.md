@@ -2,11 +2,11 @@
 
 ## 🚀 Quick Setup (5 Minutes)
 
-### Step 1: Verify SendGrid Configuration
-Your `.env` should have SendGrid configured:
+### Step 1: Verify Resend Configuration
+Your `.env` should have Resend configured:
 ```env
-SENDGRID_API_KEY=your-sendgrid-api-key-here
-SENDGRID_FROM_EMAIL=noreply@gamedey.com
+RESEND_API_KEY=re_your-resend-api-key-here
+RESEND_FROM_EMAIL=onboarding@resend.dev
 FRONTEND_URL=http://localhost:5173
 ```
 
@@ -77,7 +77,7 @@ curl -X POST http://localhost:3000/api/auth/register \
 ### Step 5: Check Your Email
 Look for an email with:
 - Subject: "Verify Your Email - GameDey"
-- From: Info@coinley.io
+- From: onboarding@resend.dev (or your configured email)
 - Contains verification link
 
 ### Step 6: Test Email Verification
@@ -179,9 +179,9 @@ Templates:
 
 ### Email Not Received?
 1. Check spam/junk folder
-2. Verify SendGrid API key is valid
-3. Check SendGrid dashboard for activity
-4. Ensure sender email (Info@coinley.io) is verified in SendGrid
+2. Verify Resend API key is valid (starts with `re_`)
+3. Check Resend dashboard logs for activity
+4. Ensure sender email is verified in Resend (or use onboarding@resend.dev)
 5. Check server logs for errors
 
 ### Server Logs Location
@@ -264,16 +264,17 @@ Example color change:
 
 ## 📊 Monitoring Email Delivery
 
-### Check SendGrid Dashboard
-1. Go to https://app.sendgrid.com
-2. Navigate to Activity Feed
+### Check Resend Dashboard
+1. Go to https://resend.com/emails
+2. Navigate to Logs section
 3. View sent, delivered, bounced, and spam reports
+4. Real-time monitoring of email delivery
 
 ### Add Webhook for Events (Optional)
-In SendGrid:
-1. Settings → Mail Settings → Event Webhook
-2. Add your webhook URL: `https://yourdomain.com/api/webhooks/sendgrid`
-3. Select events: Delivered, Bounced, Spam Report
+In Resend:
+1. Settings → Webhooks
+2. Add your webhook URL: `https://yourdomain.com/api/webhooks/resend`
+3. Select events: email.sent, email.delivered, email.bounced, email.complained
 
 ## 🔐 Security Checklist
 
@@ -292,14 +293,14 @@ Before going live:
 
 1. **Environment Variables**
    - [ ] Update `FRONTEND_URL` to production domain
-   - [ ] Verify `SENDGRID_API_KEY` is production key
-   - [ ] Update `SENDGRID_FROM_EMAIL` to your domain
+   - [ ] Verify `RESEND_API_KEY` is production key
+   - [ ] Update `RESEND_FROM_EMAIL` to your domain
 
-2. **SendGrid**
-   - [ ] Verify sender email/domain
+2. **Resend**
+   - [ ] Verify sender domain in Resend
    - [ ] Check email delivery rates
    - [ ] Test spam scores
-   - [ ] Set up domain authentication (SPF/DKIM)
+   - [ ] Set up domain authentication (SPF/DKIM records automatically provided)
 
 3. **Database**
    - [ ] Run migration on production database
@@ -313,7 +314,7 @@ Before going live:
    - [ ] Test mobile email rendering
 
 5. **Monitoring**
-   - [ ] Set up SendGrid activity monitoring
+   - [ ] Set up Resend activity monitoring
    - [ ] Add error logging/alerting
    - [ ] Monitor email delivery rates
    - [ ] Track verification completion rates
@@ -322,14 +323,14 @@ Before going live:
 
 - **Full Documentation**: `EMAIL_SYSTEM_DOCUMENTATION.md`
 - **Implementation Details**: `IMPLEMENTATION_SUMMARY.md`
-- **SendGrid Docs**: https://docs.sendgrid.com
+- **Resend Docs**: https://resend.com/docs
 
 ## 🆘 Support
 
 If you encounter issues:
 
 1. Check server console logs
-2. Review SendGrid activity log
+2. Review Resend dashboard logs
 3. Verify database migration completed
 4. Ensure all environment variables are set
 5. Check email template variables match
