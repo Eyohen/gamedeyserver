@@ -432,6 +432,152 @@ static async updateProfile(req, res) {
       return ResponseUtil.error(res, 'Failed to retrieve dashboard stats', 500);
     }
   }
+
+  // Update coach profile
+  static async updateProfile(req, res) {
+    try {
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      const {
+        bio,
+        experience,
+        hourlyRate,
+        certifications,
+        specialties,
+        availability,
+        location
+      } = req.body;
+
+      await coach.update({
+        bio: bio !== undefined ? bio : coach.bio,
+        experience: experience !== undefined ? experience : coach.experience,
+        hourlyRate: hourlyRate !== undefined ? hourlyRate : coach.hourlyRate,
+        certifications: certifications || coach.certifications,
+        specialties: specialties || coach.specialties,
+        availability: availability || coach.availability,
+        location: location || coach.location
+      });
+
+      return ResponseUtil.success(res, coach, 'Coach profile updated successfully');
+    } catch (error) {
+      console.error('Update coach profile error:', error);
+      return ResponseUtil.error(res, 'Failed to update coach profile', 500);
+    }
+  }
+
+  // Update coach sports
+  static async updateSports(req, res) {
+    try {
+      const { sportIds } = req.body; // Array of sport IDs
+
+      if (!sportIds || !Array.isArray(sportIds)) {
+        return ResponseUtil.error(res, 'Sport IDs must be provided as an array', 400);
+      }
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      // Verify all sport IDs exist
+      const sports = await Sport.findAll({ where: { id: sportIds } });
+      if (sports.length !== sportIds.length) {
+        return ResponseUtil.error(res, 'One or more invalid sport IDs', 400);
+      }
+
+      // Update the coach's sports
+      await coach.setSports(sportIds);
+
+      // Fetch updated coach with sports
+      const updatedCoach = await Coach.findByPk(coach.id, {
+        include: [{ model: Sport, as: 'Sports', through: { attributes: [] } }]
+      });
+
+      return ResponseUtil.success(res, updatedCoach, 'Coach sports updated successfully');
+    } catch (error) {
+      console.error('Update coach sports error:', error);
+      return ResponseUtil.error(res, 'Failed to update coach sports', 500);
+    }
+  }
+
+  // Upload coach profile image
+  static async uploadProfileImage(req, res) {
+    try {
+      const { imageUrl } = req.body;
+
+      if (!imageUrl) {
+        return ResponseUtil.error(res, 'Image URL is required', 400);
+      }
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      await coach.update({ profileImage: imageUrl });
+
+      return ResponseUtil.success(res, { profileImage: imageUrl }, 'Profile image uploaded successfully');
+    } catch (error) {
+      console.error('Upload coach profile image error:', error);
+      return ResponseUtil.error(res, 'Failed to upload profile image', 500);
+    }
+  }
+
+  // Upload coach gallery images
+  static async uploadGalleryImages(req, res) {
+    try {
+      const { images } = req.body; // Array of image URLs
+
+      if (!images || !Array.isArray(images)) {
+        return ResponseUtil.error(res, 'Images must be provided as an array of URLs', 400);
+      }
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      // Append new images to existing gallery
+      const existingImages = coach.galleryImages || [];
+      const updatedImages = [...existingImages, ...images];
+
+      await coach.update({ galleryImages: updatedImages });
+
+      return ResponseUtil.success(res, { galleryImages: updatedImages }, 'Gallery images uploaded successfully');
+    } catch (error) {
+      console.error('Upload coach gallery images error:', error);
+      return ResponseUtil.error(res, 'Failed to upload gallery images', 500);
+    }
+  }
+
+  // Delete coach gallery image
+  static async deleteGalleryImage(req, res) {
+    try {
+      const { imageUrl } = req.body;
+
+      if (!imageUrl) {
+        return ResponseUtil.error(res, 'Image URL is required', 400);
+      }
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      const existingImages = coach.galleryImages || [];
+      const updatedImages = existingImages.filter(img => img !== imageUrl);
+
+      await coach.update({ galleryImages: updatedImages });
+
+      return ResponseUtil.success(res, { galleryImages: updatedImages }, 'Gallery image deleted successfully');
+    } catch (error) {
+      console.error('Delete coach gallery image error:', error);
+      return ResponseUtil.error(res, 'Failed to delete gallery image', 500);
+    }
+  }
 }
 
 module.exports = CoachController;

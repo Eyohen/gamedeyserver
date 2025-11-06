@@ -18,18 +18,11 @@ router.get('/', [
   query('search').optional().isString().withMessage('Search must be a string')
 ], CoachController.getAllCoaches);
 
-router.get('/:coachId', [
-  param('coachId').isUUID().withMessage('Coach ID must be a valid UUID')
-], CoachController.getCoachById);
-
-// Protected routes (require authentication)
-router.use(authenticateToken('user'));
-
-// Get coach profile (for authenticated coach)
-router.get('/profile/me', CoachController.getProfile);
+// Protected routes (require authentication) - MUST come before /:coachId route
+router.get('/profile/me', authenticateToken('user'), CoachController.getProfile);
 
 // Update coach profile
-router.put('/profile/me', [
+router.put('/profile/me', authenticateToken('user'), [
   body('bio').optional().isLength({ max: 1000 }).withMessage('Bio must be less than 1000 characters'),
   body('experience').optional().isInt({ min: 0, max: 50 }).withMessage('Experience must be 0-50 years'),
   body('hourlyRate').optional().isDecimal().withMessage('Valid hourly rate required'),
@@ -42,7 +35,7 @@ router.put('/profile/me', [
 ], CoachController.updateProfile);
 
 // Get coach bookings
-router.get('/profile/bookings', [
+router.get('/profile/bookings', authenticateToken('user'), [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
   query('status').optional().isIn(['pending', 'confirmed', 'cancelled', 'completed', 'no_show']).withMessage('Invalid status'),
@@ -51,12 +44,39 @@ router.get('/profile/bookings', [
 ], CoachController.getBookings);
 
 // Get coach reviews
-router.get('/profile/reviews', [
+router.get('/profile/reviews', authenticateToken('user'), [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50')
 ], CoachController.getReviews);
 
 // Get coach dashboard stats
-router.get('/profile/dashboard', CoachController.getDashboardStats);
+router.get('/profile/dashboard', authenticateToken('user'), CoachController.getDashboardStats);
+
+// Update coach sports
+router.put('/profile/sports', authenticateToken('user'), [
+  body('sportIds').isArray().withMessage('Sport IDs must be an array'),
+  body('sportIds.*').isUUID().withMessage('Each sport ID must be a valid UUID')
+], CoachController.updateSports);
+
+// Upload coach profile image
+router.post('/profile/profile-image', authenticateToken('user'), [
+  body('imageUrl').isURL().withMessage('Image URL must be valid')
+], CoachController.uploadProfileImage);
+
+// Upload coach gallery images
+router.post('/profile/gallery-images', authenticateToken('user'), [
+  body('images').isArray().withMessage('Images must be an array'),
+  body('images.*').isURL().withMessage('Each image must be a valid URL')
+], CoachController.uploadGalleryImages);
+
+// Delete coach gallery image
+router.delete('/profile/gallery-images', authenticateToken('user'), [
+  body('imageUrl').isURL().withMessage('Image URL must be valid')
+], CoachController.deleteGalleryImage);
+
+// Public routes with params - MUST come AFTER all /profile/* routes
+router.get('/:coachId', [
+  param('coachId').isUUID().withMessage('Coach ID must be a valid UUID')
+], CoachController.getCoachById);
 
 module.exports = router;

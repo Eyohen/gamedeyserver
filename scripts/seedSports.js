@@ -38,9 +38,17 @@ const seedData = async () => {
       {
         name: 'Swimming',
         description: 'Individual water sport and fitness activity',
-        category: 'water',
+        category: 'individual',
         icon: '🏊',
         popularityScore: 75,
+        status: 'active'
+      },
+      {
+        name: 'Fitness',
+        description: 'Individual fitness training and conditioning',
+        category: 'individual',
+        icon: '💪',
+        popularityScore: 80,
         status: 'active'
       },
       {

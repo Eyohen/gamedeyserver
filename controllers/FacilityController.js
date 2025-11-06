@@ -421,6 +421,94 @@ class FacilityController {
       return ResponseUtil.error(res, 'Failed to check facility availability', 500);
     }
   }
+
+  // Update facility sports
+  static async updateSports(req, res) {
+    try {
+      const { sportIds } = req.body; // Array of sport IDs
+
+      if (!sportIds || !Array.isArray(sportIds)) {
+        return ResponseUtil.error(res, 'Sport IDs must be provided as an array', 400);
+      }
+
+      const facility = await Facility.findOne({ where: { ownerId: req.user.id } });
+      if (!facility) {
+        return ResponseUtil.error(res, 'Facility not found', 404);
+      }
+
+      // Verify all sport IDs exist
+      const sports = await Sport.findAll({ where: { id: sportIds } });
+      if (sports.length !== sportIds.length) {
+        return ResponseUtil.error(res, 'One or more invalid sport IDs', 400);
+      }
+
+      // Update the facility's sports
+      await facility.setSports(sportIds);
+
+      // Fetch updated facility with sports
+      const updatedFacility = await Facility.findByPk(facility.id, {
+        include: [{ model: Sport, as: 'Sports', through: { attributes: [] } }]
+      });
+
+      return ResponseUtil.success(res, updatedFacility, 'Facility sports updated successfully');
+    } catch (error) {
+      console.error('Update facility sports error:', error);
+      return ResponseUtil.error(res, 'Failed to update facility sports', 500);
+    }
+  }
+
+  // Upload facility images
+  static async uploadImages(req, res) {
+    try {
+      const { images } = req.body; // Array of image URLs (already uploaded to Cloudinary)
+
+      if (!images || !Array.isArray(images)) {
+        return ResponseUtil.error(res, 'Images must be provided as an array of URLs', 400);
+      }
+
+      const facility = await Facility.findOne({ where: { ownerId: req.user.id } });
+      if (!facility) {
+        return ResponseUtil.error(res, 'Facility not found', 404);
+      }
+
+      // Append new images to existing ones
+      const existingImages = facility.images || [];
+      const updatedImages = [...existingImages, ...images];
+
+      await facility.update({ images: updatedImages });
+
+      return ResponseUtil.success(res, { images: updatedImages }, 'Facility images uploaded successfully');
+    } catch (error) {
+      console.error('Upload facility images error:', error);
+      return ResponseUtil.error(res, 'Failed to upload facility images', 500);
+    }
+  }
+
+  // Delete facility image
+  static async deleteImage(req, res) {
+    try {
+      const { imageUrl } = req.body;
+
+      if (!imageUrl) {
+        return ResponseUtil.error(res, 'Image URL is required', 400);
+      }
+
+      const facility = await Facility.findOne({ where: { ownerId: req.user.id } });
+      if (!facility) {
+        return ResponseUtil.error(res, 'Facility not found', 404);
+      }
+
+      const existingImages = facility.images || [];
+      const updatedImages = existingImages.filter(img => img !== imageUrl);
+
+      await facility.update({ images: updatedImages });
+
+      return ResponseUtil.success(res, { images: updatedImages }, 'Facility image deleted successfully');
+    } catch (error) {
+      console.error('Delete facility image error:', error);
+      return ResponseUtil.error(res, 'Failed to delete facility image', 500);
+    }
+  }
 }
 
 module.exports = FacilityController;

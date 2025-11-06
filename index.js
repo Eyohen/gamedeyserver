@@ -23,6 +23,7 @@ const review = require('./routes/review');
 const coachBankRoutes = require('./routes/coach-bank');
 const teams = require('./routes/teams');
 const chat = require('./routes/chat');
+const upload = require('./routes/upload');
 
 const app = express();
 const server = http.createServer(app);
@@ -59,6 +60,7 @@ app.use('/api/payments', payment);
 app.use('/api/reviews', review);
 app.use('/api/coach-banking', coachBankRoutes);
 app.use('/api/teams', teams);
+app.use('/api/upload', upload);
 app.use('/api/chat', chat);
 
 // Health check route

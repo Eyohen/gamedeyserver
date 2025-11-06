@@ -153,11 +153,6 @@ static async registerUser(req, res) {
         return ResponseUtil.error(res, 'Invalid credentials', 401);
       }
 
-      // Check if email is verified
-      if (!user.emailVerified) {
-        return ResponseUtil.error(res, 'Please verify your email before logging in. Check your inbox for the verification link.', 403);
-      }
-
       // Check if user is active
       if (!user.isActive()) {
         return ResponseUtil.error(res, 'Account is suspended', 401);

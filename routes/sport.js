@@ -35,10 +35,8 @@ const SportController = require('../controllers/SportController');
 
 const router = express.Router();
 
+// Public routes - specific routes MUST come before /:sportId
 router.get('/', SportController.getAllSports);
-router.get('/:sportId', [
-  param('sportId').isUUID()
-], SportController.getSportById);
 
 router.get('/:sportId/providers', [
   param('sportId').isUUID()
@@ -47,5 +45,10 @@ router.get('/:sportId/providers', [
 router.get('/:sportId/packages', [
   param('sportId').isUUID()
 ], SportController.getSportPackages);
+
+// Generic route with param - MUST come AFTER specific routes
+router.get('/:sportId', [
+  param('sportId').isUUID()
+], SportController.getSportById);
 
 module.exports = router;
