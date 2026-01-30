@@ -1,11 +1,13 @@
 
 // controllers/AuthController.js
-const { User, Admin, Coach, Facility } = require('../models');
+const { User, Admin, Coach, Facility, Sport } = require('../models');
+const { Op } = require('sequelize');
 const ResponseUtil = require('../utils/response');
 const JWTUtil = require('../utils/jwt');
 const { validationResult } = require('express-validator');
 const emailService = require('../utils/emailService');
 const crypto = require('crypto');
+const { uploadtocloudinary } = require('../middleware/cloudinary');
 
 class AuthController {
   // User Registration
@@ -201,8 +203,31 @@ static async registerUser(req, res) {
 
       const {
         firstName, lastName, email, password, phone,
-        bio, experience, hourlyRate, specialties, certifications
+        bio, experience, hourlyRate,
+        country, state
       } = req.body;
+
+      // Parse specialties and certifications from JSON strings (sent via FormData)
+      let specialties = req.body.specialties;
+      let certifications = req.body.certifications;
+
+      // If specialties is a JSON string, parse it
+      if (typeof specialties === 'string') {
+        try {
+          specialties = JSON.parse(specialties);
+        } catch (e) {
+          specialties = [];
+        }
+      }
+
+      // If certifications is a JSON string, parse it
+      if (typeof certifications === 'string') {
+        try {
+          certifications = JSON.parse(certifications);
+        } catch (e) {
+          certifications = [];
+        }
+      }
 
       // Check if user already exists
       const existingUser = await User.findOne({ where: { email } });
@@ -216,6 +241,24 @@ static async registerUser(req, res) {
         if (existingPhone) {
           console.log('❌ Phone number already registered');
           return ResponseUtil.error(res, 'This phone number is already registered', 409);
+        }
+      }
+
+      // Handle certificate image upload if provided
+      let certificateImageUrl = null;
+      if (req.file) {
+        try {
+          console.log('📷 Uploading certificate image to Cloudinary...');
+          const uploadResult = await uploadtocloudinary(req.file.buffer);
+          if (uploadResult.message === 'success') {
+            certificateImageUrl = uploadResult.url;
+            console.log('✅ Certificate image uploaded:', certificateImageUrl);
+          } else {
+            console.error('❌ Failed to upload certificate image:', uploadResult.error);
+          }
+        } catch (uploadError) {
+          console.error('❌ Certificate image upload error:', uploadError);
+          // Continue registration even if image upload fails
         }
       }
 
@@ -240,11 +283,38 @@ static async registerUser(req, res) {
       const coach = await Coach.create({
         userId: user.id,
         bio,
-        experience,
-        hourlyRate,
+        experience: parseInt(experience) || 0,
+        hourlyRate: parseFloat(hourlyRate) || 0,
         specialties: specialties || [],
-        certifications: certifications || []
+        certifications: certifications || [],
+        certificateImage: certificateImageUrl,
+        country: country || 'Nigeria',
+        state: state || null,
+        profileVisible: false  // Profile not visible until certificate and profile photo uploaded
       });
+
+      // Link coach to sports based on specialties
+      if (specialties && specialties.length > 0) {
+        try {
+          // Find matching sports by name (case-insensitive)
+          const matchingSports = await Sport.findAll({
+            where: {
+              [Op.or]: specialties.map(specialty => ({
+                name: { [Op.iLike]: specialty }
+              }))
+            }
+          });
+
+          // Create coach-sport associations
+          if (matchingSports.length > 0) {
+            await coach.setSports(matchingSports);
+            console.log(`📌 Linked coach to ${matchingSports.length} sports`);
+          }
+        } catch (sportLinkError) {
+          console.error('⚠️ Failed to link coach to sports:', sportLinkError);
+          // Don't fail registration if sport linking fails
+        }
+      }
 
       // Send verification email
       try {

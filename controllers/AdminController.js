@@ -1,6 +1,6 @@
 
 // controllers/AdminController.js
-const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount } = require('../models');
+const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount, Sport } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -260,11 +260,41 @@ class AdminController {
       }
 
       const updateData = { verificationStatus };
+
+      // Set profileVisible based on verification status
+      if (verificationStatus === 'verified') {
+        updateData.profileVisible = true;  // Make profile visible when verified
+      } else {
+        updateData.profileVisible = false;  // Hide profile if pending or rejected
+      }
+
       if (verificationStatus === 'rejected' && rejectionReason) {
         updateData.rejectionReason = rejectionReason;
       }
 
       await coach.update(updateData);
+
+      // Link coach to sports if verified and not already linked
+      if (verificationStatus === 'verified' && coach.specialties && coach.specialties.length > 0) {
+        try {
+          const existingSports = await coach.getSports();
+          if (existingSports.length === 0) {
+            const matchingSports = await Sport.findAll({
+              where: {
+                [Op.or]: coach.specialties.map(specialty => ({
+                  name: { [Op.iLike]: specialty }
+                }))
+              }
+            });
+            if (matchingSports.length > 0) {
+              await coach.setSports(matchingSports);
+              console.log(`📌 Linked coach to ${matchingSports.length} sports on verification`);
+            }
+          }
+        } catch (sportLinkError) {
+          console.error('⚠️ Failed to link coach to sports:', sportLinkError);
+        }
+      }
 
       return ResponseUtil.success(res, coach, 'Coach verification status updated successfully');
     } catch (error) {

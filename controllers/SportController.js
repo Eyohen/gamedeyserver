@@ -90,9 +90,10 @@ class SportController {
         status: 'active',
         verificationStatus: 'verified'
       };
-      let coachWhere = { 
+      let coachWhere = {
         status: 'active',
-        verificationStatus: 'verified'
+        verificationStatus: 'verified',
+        profileVisible: true  // Only show coaches with visible profiles
       };
 
       if (minPrice || maxPrice) {

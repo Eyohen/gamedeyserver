@@ -578,6 +578,59 @@ static async updateProfile(req, res) {
       return ResponseUtil.error(res, 'Failed to delete gallery image', 500);
     }
   }
+
+  // Upload certificate image
+  static async uploadCertificateImage(req, res) {
+    try {
+      const { imageUrl } = req.body;
+
+      if (!imageUrl) {
+        return ResponseUtil.error(res, 'Certificate image URL is required', 400);
+      }
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      await coach.update({ certificateImage: imageUrl });
+
+      return ResponseUtil.success(res, { certificateImage: imageUrl }, 'Certificate image uploaded successfully');
+    } catch (error) {
+      console.error('Upload certificate image error:', error);
+      return ResponseUtil.error(res, 'Failed to upload certificate image', 500);
+    }
+  }
+
+  // Update certifications and certificate image together
+  static async updateCertifications(req, res) {
+    try {
+      const { certifications, certificateImage } = req.body;
+
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      if (!coach) {
+        return ResponseUtil.error(res, 'Coach profile not found', 404);
+      }
+
+      const updateData = {};
+      if (certifications !== undefined) {
+        updateData.certifications = certifications;
+      }
+      if (certificateImage !== undefined) {
+        updateData.certificateImage = certificateImage;
+      }
+
+      await coach.update(updateData);
+
+      return ResponseUtil.success(res, {
+        certifications: coach.certifications,
+        certificateImage: coach.certificateImage
+      }, 'Certifications updated successfully');
+    } catch (error) {
+      console.error('Update certifications error:', error);
+      return ResponseUtil.error(res, 'Failed to update certifications', 500);
+    }
+  }
 }
 
 module.exports = CoachController;

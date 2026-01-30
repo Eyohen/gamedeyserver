@@ -74,6 +74,17 @@ router.delete('/profile/gallery-images', authenticateToken('user'), [
   body('imageUrl').isURL().withMessage('Image URL must be valid')
 ], CoachController.deleteGalleryImage);
 
+// Upload certificate image
+router.post('/profile/certificate-image', authenticateToken('user'), [
+  body('imageUrl').isURL().withMessage('Certificate image URL must be valid')
+], CoachController.uploadCertificateImage);
+
+// Update certifications (text and image)
+router.put('/profile/certifications', authenticateToken('user'), [
+  body('certifications').optional().isArray().withMessage('Certifications must be an array'),
+  body('certificateImage').optional().isURL().withMessage('Certificate image must be a valid URL')
+], CoachController.updateCertifications);
+
 // Public routes with params - MUST come AFTER all /profile/* routes
 router.get('/:coachId', [
   param('coachId').isUUID().withMessage('Coach ID must be a valid UUID')

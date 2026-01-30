@@ -98,6 +98,22 @@ module.exports = (sequelize) => {
     galleryImages: {
       type: DataTypes.JSONB,
       defaultValue: []
+    },
+    certificateImage: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
+    country: {
+      type: DataTypes.STRING,
+      defaultValue: 'Nigeria'
+    },
+    state: {
+      type: DataTypes.STRING,
+      allowNull: true
+    },
+    profileVisible: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false  // Profile not visible until certificate and profile photo uploaded
     }
   }, {
     sequelize,

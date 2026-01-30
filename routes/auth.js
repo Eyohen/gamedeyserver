@@ -2,10 +2,27 @@
 // routes/auth.js
 const express = require('express');
 const { body } = require('express-validator');
+const multer = require('multer');
 const AuthController = require('../controllers/AuthController');
 const { authenticateToken } = require('../middleware/auth');
 
 const router = express.Router();
+
+// Configure multer for memory storage (for certificate uploads during registration)
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    // Accept images only
+    if (!file.mimetype.startsWith('image/')) {
+      return cb(new Error('Only image files are allowed'), false);
+    }
+    cb(null, true);
+  }
+});
 
 // User registration
 router.post('/register', [
@@ -25,19 +42,25 @@ router.post('/login', [
   body('password').notEmpty().withMessage('Password is required')
 ], AuthController.loginUser);
 
-// Coach registration
-router.post('/register/coach', [
-  body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name must be 2-50 characters'),
-  body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name must be 2-50 characters'),
-  body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
-  body('phone').optional().isMobilePhone().withMessage('Valid phone number required'),
-  body('bio').optional().isLength({ max: 1000 }).withMessage('Bio must be less than 1000 characters'),
-  body('experience').optional().isInt({ min: 0, max: 50 }).withMessage('Experience must be 0-50 years'),
-  body('hourlyRate').optional().isDecimal().withMessage('Valid hourly rate required'),
-  body('specialties').optional().isArray().withMessage('Specialties must be an array'),
-  body('certifications').optional().isArray().withMessage('Certifications must be an array')
-], AuthController.registerCoach);
+// Coach registration (with file upload support for certificate image)
+router.post('/register/coach',
+  upload.single('certificateImage'),
+  [
+    body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name must be 2-50 characters'),
+    body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name must be 2-50 characters'),
+    body('email').isEmail().normalizeEmail().withMessage('Valid email is required'),
+    body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters'),
+    body('phone').optional().isMobilePhone().withMessage('Valid phone number required'),
+    body('bio').optional().isLength({ max: 1000 }).withMessage('Bio must be less than 1000 characters'),
+    body('experience').optional(),
+    body('hourlyRate').optional(),
+    body('specialties').optional(),
+    body('certifications').optional(),
+    body('country').optional().trim().isLength({ max: 100 }).withMessage('Country must be less than 100 characters'),
+    body('state').optional().trim().isLength({ max: 100 }).withMessage('State must be less than 100 characters')
+  ],
+  AuthController.registerCoach
+);
 
 // Facility owner registration
 router.post('/register/facility', [
