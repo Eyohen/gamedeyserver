@@ -40,33 +40,35 @@ class FacilityController {
 
 
       if (search) {
-  // Split search terms to handle "Lagos, Nigeria" -> ["Lagos", "Nigeria"]
-  const searchTerms = search.toLowerCase().split(/[,\s]+/).filter(term => term.length > 0);
-  
-  const searchConditions = searchTerms.map(term => ({
-    [Op.or]: [
-      { name: { [Op.iLike]: `%${term}%` } },
-      { description: { [Op.iLike]: `%${term}%` } },
-      { address: { [Op.iLike]: `%${term}%` } },
-      // Also search in location object if it contains city/state
-      ...(facility.location ? [
-        { 'location.city': { [Op.iLike]: `%${term}%` } },
-        { 'location.state': { [Op.iLike]: `%${term}%` } },
-        { 'location.country': { [Op.iLike]: `%${term}%` } }
-      ] : [])
-    ]
-  }));
+        const searchTerms = search.toLowerCase().split(/[,\s]+/).filter(term => term.length > 0);
 
-  // At least one search term should match
-  whereClause[Op.and] = searchConditions;
-}
+        const searchConditions = searchTerms.map(term => ({
+          [Op.or]: [
+            { name: { [Op.iLike]: `%${term}%` } },
+            { description: { [Op.iLike]: `%${term}%` } },
+            { address: { [Op.iLike]: `%${term}%` } }
+          ]
+        }));
 
+        whereClause[Op.and] = searchConditions;
+      }
 
       if (amenities) {
         const amenitiesArray = amenities.split(',');
         whereClause.amenities = {
           [Op.contains]: amenitiesArray
         };
+      }
+
+      // Build sport include with optional filtering
+      const sportInclude = {
+        model: Sport,
+        as: 'Sports',
+        through: { attributes: [] }
+      };
+
+      if (sport) {
+        sportInclude.where = { id: sport };
       }
 
       const { count, rows: facilities } = await Facility.findAndCountAll({
@@ -77,11 +79,7 @@ class FacilityController {
             as: 'Owner',
             attributes: ['firstName', 'lastName', 'phone']
           },
-          {
-            model: Sport,
-            as: 'Sports',
-            through: { attributes: [] }
-          }
+          sportInclude
         ],
         order: [['averageRating', 'DESC'], ['totalReviews', 'DESC']],
         limit: parseInt(limit),
