@@ -42,9 +42,12 @@ router.post('/login', [
   body('password').notEmpty().withMessage('Password is required')
 ], AuthController.loginUser);
 
-// Coach registration (with file upload support for certificate image)
+// Coach registration (with file upload support for certificate and profile images)
 router.post('/register/coach',
-  upload.single('certificateImage'),
+  upload.fields([
+    { name: 'certificateImage', maxCount: 1 },
+    { name: 'profileImages', maxCount: 3 }
+  ]),
   [
     body('firstName').trim().isLength({ min: 2, max: 50 }).withMessage('First name must be 2-50 characters'),
     body('lastName').trim().isLength({ min: 2, max: 50 }).withMessage('Last name must be 2-50 characters'),

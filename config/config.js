@@ -10,12 +10,12 @@ module.exports = {
     "port": process.env.DB_PORT,
     //"host": "127.0.0.1",
     "dialect": "postgres",
-    // "dialectOptions": {
-    //   "ssl": {
-    //     "require": true,
-    //     "rejectUnauthorized": false
-    //   },
-    // },
+    "dialectOptions": {
+      "ssl": {
+        "require": true,
+        "rejectUnauthorized": false
+      },
+    },
   },
   "test": {
     "username": "root",

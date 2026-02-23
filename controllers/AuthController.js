@@ -246,10 +246,10 @@ static async registerUser(req, res) {
 
       // Handle certificate image upload if provided
       let certificateImageUrl = null;
-      if (req.file) {
+      if (req.files && req.files.certificateImage && req.files.certificateImage[0]) {
         try {
           console.log('📷 Uploading certificate image to Cloudinary...');
-          const uploadResult = await uploadtocloudinary(req.file.buffer);
+          const uploadResult = await uploadtocloudinary(req.files.certificateImage[0].buffer);
           if (uploadResult.message === 'success') {
             certificateImageUrl = uploadResult.url;
             console.log('✅ Certificate image uploaded:', certificateImageUrl);
@@ -259,6 +259,31 @@ static async registerUser(req, res) {
         } catch (uploadError) {
           console.error('❌ Certificate image upload error:', uploadError);
           // Continue registration even if image upload fails
+        }
+      }
+
+      // Handle profile images upload if provided (optional, up to 3)
+      let profileImageUrl = null;
+      let galleryImageUrls = [];
+      if (req.files && req.files.profileImages && req.files.profileImages.length > 0) {
+        for (const file of req.files.profileImages) {
+          try {
+            console.log('📷 Uploading profile image to Cloudinary...');
+            const uploadResult = await uploadtocloudinary(file.buffer);
+            if (uploadResult.message === 'success') {
+              galleryImageUrls.push(uploadResult.url);
+              console.log('✅ Profile image uploaded:', uploadResult.url);
+            } else {
+              console.error('❌ Failed to upload profile image:', uploadResult.error);
+            }
+          } catch (uploadError) {
+            console.error('❌ Profile image upload error:', uploadError);
+            // Continue registration even if image upload fails
+          }
+        }
+        // First image becomes the main profile image
+        if (galleryImageUrls.length > 0) {
+          profileImageUrl = galleryImageUrls[0];
         }
       }
 
@@ -288,6 +313,8 @@ static async registerUser(req, res) {
         specialties: specialties || [],
         certifications: certifications || [],
         certificateImage: certificateImageUrl,
+        profileImage: profileImageUrl,
+        galleryImages: galleryImageUrls.length > 0 ? galleryImageUrls : [],
         country: country || 'Nigeria',
         state: state || null,
         profileVisible: false  // Profile not visible until certificate and profile photo uploaded
