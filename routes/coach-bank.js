@@ -39,6 +39,7 @@ router.post('/request-payout', [
   body('amount').isNumeric().withMessage('Amount must be a number')
 ], CoachBankController.requestPayout);
 
+router.get('/banks', CoachBankController.getBanks);
 router.post('/verify-account', CoachBankController.verifyBankAccount);
 
 module.exports = router;

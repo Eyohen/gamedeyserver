@@ -51,6 +51,14 @@ module.exports = (sequelize) => {
         max: 100
       }
     },
+    homeSessionPrice: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        min: 0
+      }
+    },
     status: {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active'

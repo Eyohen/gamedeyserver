@@ -13,8 +13,10 @@ router.use(authenticateToken('user'));
 // Create booking
 router.post('/', [
   body('bookingType').isIn(['facility', 'coach', 'both']).withMessage('Invalid booking type'),
-  body('facilityId').optional().isUUID().withMessage('Facility ID must be a valid UUID'),
-  body('coachId').optional().isUUID().withMessage('Coach ID must be a valid UUID'),
+  body('facilityId').optional({ nullable: true }).isUUID().withMessage('Facility ID must be a valid UUID'),
+  body('coachId').optional({ nullable: true }).isUUID().withMessage('Coach ID must be a valid UUID'),
+  body('sportId').optional().isUUID().withMessage('Sport ID must be a valid UUID'),
+  body('packageId').optional({ nullable: true }).isUUID().withMessage('Package ID must be a valid UUID'),
   body('startTime').isISO8601().withMessage('Start time must be a valid ISO date'),
   body('endTime').isISO8601().withMessage('End time must be a valid ISO date'),
   body('participantsCount').optional().isInt({ min: 1 }).withMessage('Participants count must be at least 1'),

@@ -6,7 +6,7 @@ const TeamController = require('../controllers/TeamController');
 const { authenticateToken } = require('../middleware/auth');
 
 // All team routes require authentication
-router.use(authenticateToken);
+router.use(authenticateToken('user'));
 
 // Get available sports (sports user has booked)
 router.get('/available-sports', TeamController.getAvailableSports);

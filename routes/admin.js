@@ -105,4 +105,63 @@ router.get('/bookings', [
   query('status').optional().isIn(['pending', 'confirmed', 'completed', 'cancelled', 'all']).withMessage('Invalid status')
 ], AdminController.getAllBookings);
 
+// ==================== SESSION PACKAGES ====================
+
+// Get all session packages
+router.get('/session-packages', [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
+  query('sportId').optional().isUUID().withMessage('Sport ID must be a valid UUID'),
+  query('status').optional().isIn(['active', 'inactive']).withMessage('Invalid status'),
+  query('search').optional().isString().withMessage('Search must be a string')
+], AdminController.getAllSessionPackages);
+
+// Get a single session package
+router.get('/session-packages/:packageId', [
+  param('packageId').isUUID().withMessage('Package ID must be a valid UUID')
+], AdminController.getSessionPackageById);
+
+// Create a session package
+router.post('/session-packages', [
+  body('sportId').isUUID().withMessage('Sport ID must be a valid UUID'),
+  body('coachId').optional({ nullable: true }).isUUID().withMessage('Coach ID must be a valid UUID'),
+  body('facilityId').optional({ nullable: true }).isUUID().withMessage('Facility ID must be a valid UUID'),
+  body('name').trim().isLength({ min: 2, max: 200 }).withMessage('Name must be 2-200 characters'),
+  body('description').optional().isString().withMessage('Description must be a string'),
+  body('numberOfSessions').isInt({ min: 1 }).withMessage('Number of sessions must be at least 1'),
+  body('pricePerSession').isFloat({ min: 0 }).withMessage('Price per session must be a positive number'),
+  body('totalPrice').isFloat({ min: 0 }).withMessage('Total price must be a positive number'),
+  body('discount').optional().isFloat({ min: 0, max: 100 }).withMessage('Discount must be 0-100'),
+  body('validityDays').optional().isInt({ min: 1 }).withMessage('Validity days must be at least 1')
+], AdminController.createSessionPackage);
+
+// Update a session package
+router.put('/session-packages/:packageId', [
+  param('packageId').isUUID().withMessage('Package ID must be a valid UUID'),
+  body('sportId').optional().isUUID().withMessage('Sport ID must be a valid UUID'),
+  body('coachId').optional({ nullable: true }).isUUID().withMessage('Coach ID must be a valid UUID'),
+  body('facilityId').optional({ nullable: true }).isUUID().withMessage('Facility ID must be a valid UUID'),
+  body('name').optional().trim().isLength({ min: 2, max: 200 }).withMessage('Name must be 2-200 characters'),
+  body('description').optional().isString().withMessage('Description must be a string'),
+  body('numberOfSessions').optional().isInt({ min: 1 }).withMessage('Number of sessions must be at least 1'),
+  body('pricePerSession').optional().isFloat({ min: 0 }).withMessage('Price per session must be a positive number'),
+  body('totalPrice').optional().isFloat({ min: 0 }).withMessage('Total price must be a positive number'),
+  body('discount').optional().isFloat({ min: 0, max: 100 }).withMessage('Discount must be 0-100'),
+  body('validityDays').optional().isInt({ min: 1 }).withMessage('Validity days must be at least 1'),
+  body('status').optional().isIn(['active', 'inactive']).withMessage('Invalid status')
+], AdminController.updateSessionPackage);
+
+// Delete a session package
+router.delete('/session-packages/:packageId', [
+  param('packageId').isUUID().withMessage('Package ID must be a valid UUID')
+], AdminController.deleteSessionPackage);
+
+// ==================== SPORT MANAGEMENT ====================
+
+// Update sport (home session price)
+router.patch('/sports/:sportId', [
+  param('sportId').isUUID().withMessage('Sport ID must be a valid UUID'),
+  body('homeSessionPrice').optional().isFloat({ min: 0 }).withMessage('Home session price must be a positive number')
+], AdminController.updateSport);
+
 module.exports = router;

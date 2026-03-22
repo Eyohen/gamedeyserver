@@ -14,7 +14,7 @@ class CoachBankController {
     try {
         console.log('User ID:', req.user.id); 
       // Try to find coach by userId first
-      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      let coach = await Coach.findOne({ where: { userId: req.user.id } });
 
    if (!coach) {
       console.log('No coach found, creating one...'); // Debug log
@@ -59,7 +59,8 @@ class CoachBankController {
         return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
       }
 
-      const coachId = req.user.coachProfile?.id;
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      const coachId = coach?.id;
       if (!coachId) {
         return ResponseUtil.error(res, 'Coach profile not found', 404);
       }
@@ -84,7 +85,7 @@ class CoachBankController {
       }
 
       // Verify account with Paystack (optional - implement if needed)
-      const verificationStatus = await CoachBankController.verifyBankAccount(bankCode, accountNumber);
+      const verificationStatus = await CoachBankController.verifyBankAccountInternal(bankCode, accountNumber);
 
       // Create Paystack transfer recipient
       let paystackRecipientCode = null;
@@ -121,7 +122,8 @@ class CoachBankController {
   static async deleteBankAccount(req, res) {
     try {
       const { accountId } = req.params;
-      const coachId = req.user.coachProfile?.id;
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      const coachId = coach?.id;
 
       const bankAccount = await BankAccount.findOne({
         where: { id: accountId, coachId, isActive: true }
@@ -145,7 +147,8 @@ class CoachBankController {
   static async setPreferredAccount(req, res) {
     try {
       const { accountId } = req.params;
-      const coachId = req.user.coachProfile?.id;
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      const coachId = coach?.id;
 
       const bankAccount = await BankAccount.findOne({
         where: { id: accountId, coachId, isActive: true }
@@ -174,7 +177,8 @@ class CoachBankController {
   // Get coach earnings
   static async getEarnings(req, res) {
     try {
-      const coachId = req.user.coachProfile?.id;
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      const coachId = coach?.id;
 
       if (!coachId) {
         return ResponseUtil.error(res, 'Coach profile not found', 404);
@@ -220,7 +224,8 @@ class CoachBankController {
   // Request immediate payout
   static async requestPayout(req, res) {
     try {
-      const coachId = req.user.coachProfile?.id;
+      const coach = await Coach.findOne({ where: { userId: req.user.id } });
+      const coachId = coach?.id;
       const { amount } = req.body;
 
       // Get preferred account
@@ -287,8 +292,8 @@ class CoachBankController {
     }
   }
 
-  // Helper: Verify bank account with Paystack
-  static async verifyBankAccount(bankCode, accountNumber) {
+  // Helper: Verify bank account with Paystack (internal)
+  static async verifyBankAccountInternal(bankCode, accountNumber) {
     try {
       const response = await axios.get(
         `https://api.paystack.co/bank/resolve?account_number=${accountNumber}&bank_code=${bankCode}`,
@@ -382,6 +387,33 @@ class CoachBankController {
   }
 
 
+
+  // Get list of banks from Paystack
+  static async getBanks(req, res) {
+    try {
+      const response = await axios.get(
+        'https://api.paystack.co/bank?country=nigeria&perPage=100',
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.PAYSTACK_SECRET_KEY}`
+          }
+        }
+      );
+
+      const banks = response.data.data.map(bank => ({
+        code: bank.code,
+        name: bank.name
+      }));
+
+      // Sort alphabetically by name
+      banks.sort((a, b) => a.name.localeCompare(b.name));
+
+      return ResponseUtil.success(res, banks, 'Banks retrieved successfully');
+    } catch (error) {
+      console.error('Failed to fetch banks:', error);
+      return ResponseUtil.error(res, 'Failed to fetch banks', 500);
+    }
+  }
 
   // Verify bank account
   static async verifyBankAccount(req, res) {

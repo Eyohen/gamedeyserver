@@ -1,6 +1,6 @@
 
 // controllers/AdminController.js
-const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount, Sport } = require('../models');
+const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount, Sport, SessionPackage } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -944,6 +944,285 @@ class AdminController {
     }
   }
 
+  // ==================== SESSION PACKAGES ====================
+
+  // Get all session packages with filtering
+  static async getAllSessionPackages(req, res) {
+    try {
+      const { page = 1, limit = 20, sportId, status, search } = req.query;
+      const offset = (page - 1) * limit;
+
+      let whereClause = {};
+
+      if (sportId) {
+        whereClause.sportId = sportId;
+      }
+
+      if (status) {
+        whereClause.status = status;
+      }
+
+      if (search) {
+        whereClause[Op.or] = [
+          { name: { [Op.iLike]: `%${search}%` } },
+          { description: { [Op.iLike]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows: packages } = await SessionPackage.findAndCountAll({
+        where: whereClause,
+        include: [
+          {
+            model: Sport,
+            as: 'Sport',
+            attributes: ['id', 'name', 'category', 'icon']
+          },
+          {
+            model: Coach,
+            as: 'Coach',
+            include: [{
+              model: User,
+              as: 'User',
+              attributes: ['firstName', 'lastName', 'profileImage']
+            }]
+          },
+          {
+            model: Facility,
+            as: 'Facility',
+            attributes: ['id', 'name', 'address', 'images']
+          }
+        ],
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      const pagination = {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        pages: Math.ceil(count / limit)
+      };
+
+      return ResponseUtil.paginated(res, packages, pagination, 'Session packages retrieved successfully');
+    } catch (error) {
+      console.error('Get all session packages error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve session packages', 500);
+    }
+  }
+
+  // Get a single session package by ID
+  static async getSessionPackageById(req, res) {
+    try {
+      const { packageId } = req.params;
+
+      const pkg = await SessionPackage.findByPk(packageId, {
+        include: [
+          {
+            model: Sport,
+            as: 'Sport',
+            attributes: ['id', 'name', 'category', 'icon']
+          },
+          {
+            model: Coach,
+            as: 'Coach',
+            include: [{
+              model: User,
+              as: 'User',
+              attributes: ['firstName', 'lastName', 'profileImage']
+            }]
+          },
+          {
+            model: Facility,
+            as: 'Facility',
+            attributes: ['id', 'name', 'address', 'images']
+          }
+        ]
+      });
+
+      if (!pkg) {
+        return ResponseUtil.error(res, 'Session package not found', 404);
+      }
+
+      return ResponseUtil.success(res, pkg, 'Session package retrieved successfully');
+    } catch (error) {
+      console.error('Get session package by ID error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve session package', 500);
+    }
+  }
+
+  // Create a new session package
+  static async createSessionPackage(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+      }
+
+      const { sportId, coachId, facilityId, name, description, numberOfSessions, pricePerSession, totalPrice, discount, validityDays } = req.body;
+
+      // Verify sport exists
+      const sport = await Sport.findByPk(sportId);
+      if (!sport) {
+        return ResponseUtil.error(res, 'Sport not found', 404);
+      }
+
+      // Verify coach exists if provided
+      if (coachId) {
+        const coach = await Coach.findByPk(coachId);
+        if (!coach) {
+          return ResponseUtil.error(res, 'Coach not found', 404);
+        }
+      }
+
+      // Verify facility exists if provided
+      if (facilityId) {
+        const facility = await Facility.findByPk(facilityId);
+        if (!facility) {
+          return ResponseUtil.error(res, 'Facility not found', 404);
+        }
+      }
+
+      const pkg = await SessionPackage.create({
+        sportId,
+        coachId: coachId || null,
+        facilityId: facilityId || null,
+        name,
+        description,
+        numberOfSessions,
+        pricePerSession,
+        totalPrice,
+        discount: discount || 0,
+        validityDays: validityDays || 90,
+        status: 'active'
+      });
+
+      // Fetch with associations
+      const createdPackage = await SessionPackage.findByPk(pkg.id, {
+        include: [
+          { model: Sport, as: 'Sport', attributes: ['id', 'name', 'category'] },
+          { model: Coach, as: 'Coach', include: [{ model: User, as: 'User', attributes: ['firstName', 'lastName'] }] },
+          { model: Facility, as: 'Facility', attributes: ['id', 'name'] }
+        ]
+      });
+
+      return ResponseUtil.success(res, createdPackage, 'Session package created successfully', 201);
+    } catch (error) {
+      console.error('Create session package error:', error);
+      return ResponseUtil.error(res, 'Failed to create session package', 500);
+    }
+  }
+
+  // Update a session package
+  static async updateSessionPackage(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+      }
+
+      const { packageId } = req.params;
+      const { sportId, coachId, facilityId, name, description, numberOfSessions, pricePerSession, totalPrice, discount, validityDays, status } = req.body;
+
+      const pkg = await SessionPackage.findByPk(packageId);
+      if (!pkg) {
+        return ResponseUtil.error(res, 'Session package not found', 404);
+      }
+
+      // Verify sport if changing
+      if (sportId && sportId !== pkg.sportId) {
+        const sport = await Sport.findByPk(sportId);
+        if (!sport) {
+          return ResponseUtil.error(res, 'Sport not found', 404);
+        }
+      }
+
+      const updateData = {};
+      if (sportId !== undefined) updateData.sportId = sportId;
+      if (coachId !== undefined) updateData.coachId = coachId || null;
+      if (facilityId !== undefined) updateData.facilityId = facilityId || null;
+      if (name !== undefined) updateData.name = name;
+      if (description !== undefined) updateData.description = description;
+      if (numberOfSessions !== undefined) updateData.numberOfSessions = numberOfSessions;
+      if (pricePerSession !== undefined) updateData.pricePerSession = pricePerSession;
+      if (totalPrice !== undefined) updateData.totalPrice = totalPrice;
+      if (discount !== undefined) updateData.discount = discount;
+      if (validityDays !== undefined) updateData.validityDays = validityDays;
+      if (status !== undefined) updateData.status = status;
+
+      await pkg.update(updateData);
+
+      // Fetch updated with associations
+      const updatedPackage = await SessionPackage.findByPk(packageId, {
+        include: [
+          { model: Sport, as: 'Sport', attributes: ['id', 'name', 'category'] },
+          { model: Coach, as: 'Coach', include: [{ model: User, as: 'User', attributes: ['firstName', 'lastName'] }] },
+          { model: Facility, as: 'Facility', attributes: ['id', 'name'] }
+        ]
+      });
+
+      return ResponseUtil.success(res, updatedPackage, 'Session package updated successfully');
+    } catch (error) {
+      console.error('Update session package error:', error);
+      return ResponseUtil.error(res, 'Failed to update session package', 500);
+    }
+  }
+
+  // Delete a session package
+  static async deleteSessionPackage(req, res) {
+    try {
+      const { packageId } = req.params;
+
+      const pkg = await SessionPackage.findByPk(packageId);
+      if (!pkg) {
+        return ResponseUtil.error(res, 'Session package not found', 404);
+      }
+
+      // Check if there are active bookings using this package
+      const activeBookings = await Booking.count({
+        where: {
+          packageId,
+          status: { [Op.in]: ['pending', 'confirmed'] }
+        }
+      });
+
+      if (activeBookings > 0) {
+        return ResponseUtil.error(res, 'Cannot delete package with active bookings. Deactivate it instead.', 400);
+      }
+
+      await pkg.destroy();
+
+      return ResponseUtil.success(res, null, 'Session package deleted successfully');
+    } catch (error) {
+      console.error('Delete session package error:', error);
+      return ResponseUtil.error(res, 'Failed to delete session package', 500);
+    }
+  }
+
+  // Update sport (home session price, etc.)
+  static async updateSport(req, res) {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        return ResponseUtil.error(res, 'Validation failed', 400, errors.array());
+      }
+
+      const { sportId } = req.params;
+      const { homeSessionPrice } = req.body;
+
+      const sport = await Sport.findByPk(sportId);
+      if (!sport) {
+        return ResponseUtil.error(res, 'Sport not found', 404);
+      }
+
+      await sport.update({ homeSessionPrice });
+
+      return ResponseUtil.success(res, sport, 'Sport updated successfully');
+    } catch (error) {
+      console.error('Update sport error:', error);
+      return ResponseUtil.error(res, 'Failed to update sport', 500);
+    }
+  }
 }
 
 module.exports = AdminController;
