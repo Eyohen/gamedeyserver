@@ -1,5 +1,5 @@
 // controllers/ChatController.js
-const { Conversation, Booking, User, Coach, Facility } = require('../models');
+const { Conversation, Booking, User, Coach, Facility, Notification } = require('../models');
 const ResponseUtil = require('../utils/response');
 const papersignalClient = require('../config/papersignal');
 const { Op } = require('sequelize');
@@ -430,6 +430,35 @@ class ChatController {
         lastMessageAt: new Date(),
         lastMessagePreview: content.trim().substring(0, 100)
       });
+
+      // Send notification to the other participant
+      try {
+        let recipientUserId = null;
+        let senderLabel = userName;
+
+        if (userRole === 'user') {
+          // Player sent message → notify coach
+          if (conversation.coach?.User?.id) {
+            recipientUserId = conversation.coach.User.id;
+          }
+        } else if (userRole === 'coach' || userRole === 'facility') {
+          // Coach/facility sent message → notify player
+          recipientUserId = conversation.userId;
+        }
+
+        if (recipientUserId) {
+          await Notification.create({
+            userId: recipientUserId,
+            type: 'system_announcement',
+            title: 'New Message',
+            message: `${senderLabel}: ${content.trim().substring(0, 80)}`,
+            data: { conversationId, senderId: userId, senderName: userName },
+            priority: 'medium'
+          });
+        }
+      } catch (notifErr) {
+        console.error('Failed to create message notification:', notifErr);
+      }
 
       return ResponseUtil.success(res, {
         message: messageData.message
