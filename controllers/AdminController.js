@@ -1,6 +1,6 @@
 
 // controllers/AdminController.js
-const { Admin, User, Coach, Facility, Booking, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount, Sport, SessionPackage } = require('../models');
+const { Admin, User, Coach, Facility, Booking, Payment, Review, Post, Transaction, Comment, Vote, CoachEarning, BankAccount, Sport, SessionPackage, AdminNotification } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -14,14 +14,22 @@ class AdminController {
       const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
       const startOfWeek = new Date(today.setDate(today.getDate() - today.getDay()));
 
-      // Get user statistics
-      const totalUsers = await User.count();
-      const activeUsers = await User.count({ where: { status: 'active' } });
-      const newUsersThisMonth = await User.count({
-        where: { createdAt: { [Op.gte]: startOfMonth } }
+      // Get IDs of users who are coaches or facility owners (to exclude from player count)
+      const coachUserIds = await Coach.findAll({ attributes: ['userId'], raw: true });
+      const facilityOwnerIds = await Facility.findAll({ attributes: ['ownerId'], raw: true });
+      const excludeIds = [...new Set([
+        ...coachUserIds.map(c => c.userId),
+        ...facilityOwnerIds.map(f => f.ownerId)
+      ])];
+
+      // Get player-only statistics (excluding coaches & facility owners)
+      const playerWhere = excludeIds.length > 0 ? { id: { [Op.notIn]: excludeIds } } : {};
+      const totalPlayers = await User.count({ where: playerWhere });
+      const activePlayers = await User.count({ where: { ...playerWhere, status: 'active' } });
+      const newPlayersThisMonth = await User.count({
+        where: { ...playerWhere, createdAt: { [Op.gte]: startOfMonth } }
       });
 
-      
       // Get coach statistics
       const totalCoaches = await Coach.count();
       const verifiedCoaches = await Coach.count({ where: { verificationStatus: 'verified' } });
@@ -39,14 +47,14 @@ class AdminController {
       });
       const pendingBookings = await Booking.count({ where: { status: 'pending' } });
 
-      // Get revenue statistics
-      const totalRevenue = await Booking.sum('totalAmount', {
-        where: { status: 'completed' }
+      // Get revenue statistics (from successful payments)
+      const totalRevenue = await Payment.sum('amount', {
+        where: { status: 'success' }
       }) || 0;
 
-      const monthlyRevenue = await Booking.sum('totalAmount', {
-        where: { 
-          status: 'completed',
+      const monthlyRevenue = await Payment.sum('amount', {
+        where: {
+          status: 'success',
           createdAt: { [Op.gte]: startOfMonth }
         }
       }) || 0;
@@ -59,10 +67,10 @@ class AdminController {
       const flaggedPosts = await Post.count({ where: { status: 'flagged' } });
 
       const overview = {
-        users: {
-          total: totalUsers,
-          active: activeUsers,
-          newThisMonth: newUsersThisMonth
+        players: {
+          total: totalPlayers,
+          active: activePlayers,
+          newThisMonth: newPlayersThisMonth
         },
         coaches: {
           total: totalCoaches,
@@ -100,11 +108,24 @@ class AdminController {
   // Get all users with filtering and pagination
   static async getAllUsers(req, res) {
     try {
-      const { page = 1, limit = 10, status, search, sortBy = 'createdAt', sortOrder = 'DESC' } = req.query;
+      const { page = 1, limit = 10, status, search, sortBy = 'createdAt', sortOrder = 'DESC', playersOnly } = req.query;
       const offset = (page - 1) * limit;
 
       let whereClause = {};
-      
+
+      // If playersOnly=true, exclude users who are coaches or facility owners
+      if (playersOnly === 'true') {
+        const coachUserIds = await Coach.findAll({ attributes: ['userId'], raw: true });
+        const facilityOwnerIds = await Facility.findAll({ attributes: ['ownerId'], raw: true });
+        const excludeIds = [...new Set([
+          ...coachUserIds.map(c => c.userId),
+          ...facilityOwnerIds.map(f => f.ownerId)
+        ])];
+        if (excludeIds.length > 0) {
+          whereClause.id = { [Op.notIn]: excludeIds };
+        }
+      }
+
       if (status) {
         whereClause.status = status;
       }
@@ -142,9 +163,9 @@ class AdminController {
   // Get user details by ID
   static async getUserById(req, res) {
     try {
-      const { userId } = req.params;
+      const playerId = req.params.playerId || req.params.userId;
 
-      const user = await User.findByPk(userId, {
+      const user = await User.findByPk(playerId, {
         attributes: { exclude: ['password'] },
         include: [
           {
@@ -176,14 +197,14 @@ class AdminController {
   // Update user status
   static async updateUserStatus(req, res) {
     try {
-      const { userId } = req.params;
+      const playerId = req.params.playerId || req.params.userId;
       const { status } = req.body;
 
       if (!['active', 'inactive', 'suspended'].includes(status)) {
         return ResponseUtil.error(res, 'Invalid status', 400);
       }
 
-      const user = await User.findByPk(userId);
+      const user = await User.findByPk(playerId);
       if (!user) {
         return ResponseUtil.error(res, 'User not found', 404);
       }
@@ -1221,6 +1242,63 @@ class AdminController {
     } catch (error) {
       console.error('Update sport error:', error);
       return ResponseUtil.error(res, 'Failed to update sport', 500);
+    }
+  }
+  // Get admin notifications
+  static async getAdminNotifications(req, res) {
+    try {
+      const { limit = 20 } = req.query;
+      const notifications = await AdminNotification.findAll({
+        order: [['createdAt', 'DESC']],
+        limit: parseInt(limit)
+      });
+      return ResponseUtil.success(res, notifications, 'Notifications retrieved');
+    } catch (error) {
+      console.error('Get admin notifications error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve notifications', 500);
+    }
+  }
+
+  // Get unread notification count
+  static async getUnreadNotificationCount(req, res) {
+    try {
+      const count = await AdminNotification.count({ where: { isRead: false } });
+      return ResponseUtil.success(res, { count }, 'Unread count retrieved');
+    } catch (error) {
+      console.error('Get unread count error:', error);
+      return ResponseUtil.error(res, 'Failed to retrieve unread count', 500);
+    }
+  }
+
+  // Mark notification as read
+  static async markNotificationRead(req, res) {
+    try {
+      const { id } = req.params;
+      await AdminNotification.update({ isRead: true }, { where: { id } });
+      return ResponseUtil.success(res, null, 'Notification marked as read');
+    } catch (error) {
+      console.error('Mark notification read error:', error);
+      return ResponseUtil.error(res, 'Failed to mark notification as read', 500);
+    }
+  }
+
+  // Mark all notifications as read
+  static async markAllNotificationsRead(req, res) {
+    try {
+      await AdminNotification.update({ isRead: true }, { where: { isRead: false } });
+      return ResponseUtil.success(res, null, 'All notifications marked as read');
+    } catch (error) {
+      console.error('Mark all read error:', error);
+      return ResponseUtil.error(res, 'Failed to mark all as read', 500);
+    }
+  }
+
+  // Helper: Create admin notification (static utility)
+  static async createNotification(type, title, message, data = {}) {
+    try {
+      await AdminNotification.create({ type, title, message, data });
+    } catch (error) {
+      console.error('Create admin notification error:', error);
     }
   }
 }

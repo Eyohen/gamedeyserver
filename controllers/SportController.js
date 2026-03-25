@@ -175,12 +175,13 @@ class SportController {
   static async getSportPackages(req, res) {
     try {
       const { sportId } = req.params;
+      const { sessionType } = req.query;
+
+      const where = { sportId, status: 'active' };
+      if (sessionType) where.sessionType = sessionType;
 
       const packages = await SessionPackage.findAll({
-        where: { 
-          sportId,
-          status: 'active'
-        },
+        where,
         include: [
           {
             model: Coach,

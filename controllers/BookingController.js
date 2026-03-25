@@ -1,6 +1,6 @@
 
 // controllers/BookingController.js
-const { Booking, User, Coach, Facility, Payment, Notification, Sport, SessionPackage } = require('../models');
+const { Booking, User, Coach, Facility, Payment, Notification, Sport, SessionPackage, AdminNotification } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -354,6 +354,20 @@ static async createBooking(req, res) {
         console.error('❌ Failed to create chat conversation:', chatError);
         // Don't fail the booking if chat creation fails
       }
+    }
+
+    // Create admin notification for new booking
+    try {
+      const bookingUser = await User.findByPk(createdBooking.userId, { attributes: ['firstName', 'lastName'] });
+      const playerName = bookingUser ? `${bookingUser.firstName} ${bookingUser.lastName}` : 'A player';
+      await AdminNotification.create({
+        type: 'new_booking',
+        title: 'New Booking',
+        message: `${playerName} made a new booking`,
+        data: { bookingId: createdBooking.id, userId: createdBooking.userId }
+      });
+    } catch (notifErr) {
+      console.error('Admin notification error:', notifErr);
     }
 
     return ResponseUtil.success(res, createdBooking, 'Booking created successfully', 201);

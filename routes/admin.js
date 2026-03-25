@@ -13,24 +13,29 @@ router.use(authenticateToken('admin'));
 // Dashboard overview
 router.get('/dashboard', AdminController.getDashboardOverview);
 
-// User management
-router.get('/users', [
+// Player management (aliased from /users to /players)
+const playerValidation = [
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 50 }).withMessage('Limit must be 1-50'),
   query('status').optional().isIn(['active', 'inactive', 'suspended']).withMessage('Invalid status'),
   query('search').optional().isString().withMessage('Search must be a string'),
   query('sortBy').optional().isIn(['createdAt', 'firstName', 'lastName', 'email']).withMessage('Invalid sort field'),
   query('sortOrder').optional().isIn(['ASC', 'DESC']).withMessage('Invalid sort order')
-], AdminController.getAllUsers);
-
-router.get('/users/:userId', [
-  param('userId').isUUID().withMessage('User ID must be a valid UUID')
-], AdminController.getUserById);
-
-router.patch('/users/:userId/status', [
-  param('userId').isUUID().withMessage('User ID must be a valid UUID'),
+];
+const playerIdValidation = [param('playerId').isUUID().withMessage('Player ID must be a valid UUID')];
+const playerStatusValidation = [
+  param('playerId').isUUID().withMessage('Player ID must be a valid UUID'),
   body('status').isIn(['active', 'inactive', 'suspended']).withMessage('Invalid status')
-], AdminController.updateUserStatus);
+];
+
+router.get('/players', playerValidation, AdminController.getAllUsers);
+router.get('/players/:playerId', playerIdValidation, AdminController.getUserById);
+router.patch('/players/:playerId/status', playerStatusValidation, AdminController.updateUserStatus);
+
+// Legacy /users routes (backward compatibility)
+router.get('/users', playerValidation, AdminController.getAllUsers);
+router.get('/users/:playerId', playerIdValidation, AdminController.getUserById);
+router.patch('/users/:playerId/status', playerStatusValidation, AdminController.updateUserStatus);
 
 // Coach management
 router.get('/coaches', [
@@ -163,5 +168,13 @@ router.patch('/sports/:sportId', [
   param('sportId').isUUID().withMessage('Sport ID must be a valid UUID'),
   body('homeSessionPrice').optional().isFloat({ min: 0 }).withMessage('Home session price must be a positive number')
 ], AdminController.updateSport);
+
+// Admin notifications
+router.get('/notifications', AdminController.getAdminNotifications);
+router.get('/notifications/unread-count', AdminController.getUnreadNotificationCount);
+router.patch('/notifications/:id/read', [
+  param('id').isUUID().withMessage('Notification ID must be a valid UUID')
+], AdminController.markNotificationRead);
+router.patch('/notifications/read-all', AdminController.markAllNotificationsRead);
 
 module.exports = router;

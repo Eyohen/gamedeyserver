@@ -1,6 +1,6 @@
 
 // controllers/AuthController.js
-const { User, Admin, Coach, Facility, Sport } = require('../models');
+const { User, Admin, Coach, Facility, Sport, AdminNotification } = require('../models');
 const { Op } = require('sequelize');
 const ResponseUtil = require('../utils/response');
 const JWTUtil = require('../utils/jwt');
@@ -81,8 +81,8 @@ static async registerUser(req, res) {
     let token, refreshToken;
 
     try {
-      token = JWTUtil.generateToken({ id: user.id, type: 'user' });
-      refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user' });
+      token = JWTUtil.generateToken({ id: user.id, type: 'player' });
+      refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'player' });
       console.log('✅ Tokens generated successfully');
     } catch (tokenError) {
       console.error('❌ Token generation failed:', tokenError);
@@ -104,6 +104,19 @@ static async registerUser(req, res) {
     };
 
     console.log('📤 Sending success response');
+
+    // Create admin notification for new registration
+    try {
+      await AdminNotification.create({
+        type: 'new_player',
+        title: 'New Player Registered',
+        message: `${user.firstName} ${user.lastName} just registered as a player`,
+        data: { userId: user.id, name: `${user.firstName} ${user.lastName}`, email: user.email }
+      });
+    } catch (notifErr) {
+      console.error('Admin notification error:', notifErr);
+    }
+
     return ResponseUtil.success(res, responseData, 'User registered successfully. Please check your email to verify your account.', 201);
 
   } catch (error) {
@@ -164,7 +177,7 @@ static async registerUser(req, res) {
       await user.update({ lastLoginAt: new Date() });
 
       // Determine user type for token
-      let userType = 'user';
+      let userType = 'player';
       if (user.Coach) {
         userType = 'coach';
       } else if (user.ownedFacilities && user.ownedFacilities.length > 0) {
@@ -359,6 +372,18 @@ static async registerUser(req, res) {
       const token = JWTUtil.generateToken({ id: user.id, type: 'user', role: 'coach' });
       const refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user', role: 'coach' });
 
+      // Create admin notification for new coach
+      try {
+        await AdminNotification.create({
+          type: 'new_coach',
+          title: 'New Coach Registered',
+          message: `${user.firstName} ${user.lastName} just registered as a coach`,
+          data: { userId: user.id, coachId: coach.id, name: `${user.firstName} ${user.lastName}` }
+        });
+      } catch (notifErr) {
+        console.error('Admin notification error:', notifErr);
+      }
+
       return ResponseUtil.success(res, {
         user,
         coach,
@@ -446,6 +471,18 @@ static async registerUser(req, res) {
       // Generate tokens
       const token = JWTUtil.generateToken({ id: user.id, type: 'user', role: 'facility_owner' });
       const refreshToken = JWTUtil.generateRefreshToken({ id: user.id, type: 'user', role: 'facility_owner' });
+
+      // Create admin notification for new facility
+      try {
+        await AdminNotification.create({
+          type: 'new_facility',
+          title: 'New Facility Registered',
+          message: `${user.firstName} ${user.lastName} registered facility "${facility.name}"`,
+          data: { userId: user.id, facilityId: facility.id, facilityName: facility.name }
+        });
+      } catch (notifErr) {
+        console.error('Admin notification error:', notifErr);
+      }
 
       return ResponseUtil.success(res, {
         user,
@@ -749,7 +786,7 @@ static async verifyEmail(req, res) {
     console.log(`✅ Email verified for user: ${user.email}`);
 
     // Determine user type
-    let userType = 'user';
+    let userType = 'player';
     const coach = await Coach.findOne({ where: { userId: user.id } });
     const facility = await Facility.findOne({ where: { ownerId: user.id } });
 

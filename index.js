@@ -50,6 +50,7 @@ app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
 // Routes
 app.use('/api/auth', auth);
 app.use('/api/users', user);
+app.use('/api/players', user);
 app.use('/api/coaches', coach);
 app.use('/api/facilities', facility);
 app.use('/api/sports', sport);

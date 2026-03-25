@@ -60,6 +60,12 @@ module.exports = (sequelize) => {
         min: 0
       }
     },
+    homeSessionRate: {
+      type: DataTypes.DECIMAL(8, 2),
+      validate: {
+        min: 0
+      }
+    },
     availability: {
       type: DataTypes.JSONB,
       defaultValue: {}

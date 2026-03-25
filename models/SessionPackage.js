@@ -82,6 +82,10 @@ module.exports = (sequelize) => {
     status: {
       type: DataTypes.ENUM('active', 'inactive'),
       defaultValue: 'active'
+    },
+    sessionType: {
+      type: DataTypes.ENUM('facility', 'home'),
+      defaultValue: 'facility'
     }
   }, {
     sequelize,

@@ -40,6 +40,7 @@ const authenticateToken = (userType = 'user') => {
           break;
           
         case 'user':
+        case 'player':
         default:
           // For user routes, ensure the token is for a user (optional check)
           // Uncomment if you want strict separation

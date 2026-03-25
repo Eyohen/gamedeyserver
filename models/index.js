@@ -63,6 +63,7 @@ const CoachEarning = require('./CoachEarning')(sequelize);
 const SessionPackage = require('./SessionPackage')(sequelize);
 const Team = require('./Team')(sequelize);
 const Conversation = require('./Conversation')(sequelize);
+const AdminNotification = require('./AdminNotification')(sequelize);
 
 // Define associations
 const models = {
@@ -83,7 +84,8 @@ const models = {
   CoachEarning,
   SessionPackage,
   Team,
-  Conversation
+  Conversation,
+  AdminNotification
 };
 
 
