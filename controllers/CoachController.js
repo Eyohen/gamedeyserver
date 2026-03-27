@@ -1,6 +1,6 @@
 
 // controllers/CoachController.js
-const { Coach, User, Booking, Review, Sport } = require('../models');
+const { Coach, User, Booking, Review, Sport, Facility } = require('../models');
 const ResponseUtil = require('../utils/response');
 const { validationResult } = require('express-validator');
 const { Op } = require('sequelize');
@@ -289,14 +289,27 @@ static async updateProfile(req, res) {
             attributes: ['firstName', 'lastName', 'phone', 'profileImage']
           },
           {
-            model: require('../models').Facility,
+            model: Facility,
             as: 'Facility',
-            attributes: ['name', 'address']
+            attributes: ['name', 'address', 'images']
+          },
+          {
+            model: Sport,
+            as: 'Sport',
+            attributes: ['name', 'icon']
           }
         ],
-        order: [['startTime', 'ASC']],
+        order: [['startTime', 'DESC']],
         limit: parseInt(limit),
         offset: parseInt(offset)
+      });
+
+      // Compute coach-only amount for each booking
+      const enrichedBookings = bookings.map(b => {
+        const booking = b.toJSON();
+        const durationHours = (new Date(booking.endTime) - new Date(booking.startTime)) / (1000 * 60 * 60);
+        booking.coachAmount = parseFloat((parseFloat(coach.hourlyRate || 0) * durationHours).toFixed(2));
+        return booking;
       });
 
       const pagination = {
@@ -306,7 +319,7 @@ static async updateProfile(req, res) {
         pages: Math.ceil(count / limit)
       };
 
-      return ResponseUtil.paginated(res, bookings, pagination, 'Coach bookings retrieved successfully');
+      return ResponseUtil.paginated(res, enrichedBookings, pagination, 'Coach bookings retrieved successfully');
     } catch (error) {
       console.error('Get coach bookings error:', error);
       return ResponseUtil.error(res, 'Failed to retrieve coach bookings', 500);
