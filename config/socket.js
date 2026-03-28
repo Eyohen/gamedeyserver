@@ -1,7 +1,7 @@
 // config/socket.js
 const { Server } = require('socket.io');
 const jwt = require('jsonwebtoken');
-const { Conversation } = require('../models');
+const { Conversation, Coach, Facility } = require('../models');
 
 let io;
 
@@ -31,8 +31,8 @@ function initializeSocket(server) {
 
       // Verify JWT token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      socket.userId = decoded.userId;
-      socket.userRole = decoded.role;
+      socket.userId = decoded.id;
+      socket.userRole = decoded.type || decoded.role || 'player';
       next();
     } catch (error) {
       console.error('Socket authentication error:', error.message);
@@ -62,12 +62,23 @@ function initializeSocket(server) {
 
         // Check access based on user role
         let hasAccess = false;
-        if (socket.userRole === 'user' && conversation.userId === socket.userId) {
+        // Player: userId on conversation matches socket user
+        if (conversation.userId === socket.userId) {
           hasAccess = true;
-        } else if (socket.userRole === 'coach' && conversation.coachId === socket.userId) {
-          hasAccess = true;
-        } else if (socket.userRole === 'facility' && conversation.facilityId === socket.userId) {
-          hasAccess = true;
+        }
+        // Coach: look up coach by userId, compare coachId
+        if (!hasAccess && conversation.coachId) {
+          const coach = await Coach.findOne({ where: { userId: socket.userId } });
+          if (coach && conversation.coachId === coach.id) {
+            hasAccess = true;
+          }
+        }
+        // Facility: look up facility by ownerId, compare facilityId
+        if (!hasAccess && conversation.facilityId) {
+          const facility = await Facility.findOne({ where: { ownerId: socket.userId } });
+          if (facility && conversation.facilityId === facility.id) {
+            hasAccess = true;
+          }
         }
 
         if (!hasAccess) {
