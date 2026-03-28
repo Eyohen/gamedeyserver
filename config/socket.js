@@ -12,7 +12,10 @@ let io;
 function initializeSocket(server) {
   io = new Server(server, {
     cors: {
-      origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+      origin: function (origin, callback) {
+        // Allow all origins (matches the app.use(cors()) behavior for REST)
+        callback(null, true);
+      },
       methods: ['GET', 'POST'],
       credentials: true
     },
